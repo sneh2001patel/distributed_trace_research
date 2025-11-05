@@ -68,6 +68,10 @@ instance/
 # Scrapy stuff:
 .scrapy
 
+# data directory
+normal_trace/
+abnormal_trace/
+
 # Sphinx documentation
 docs/_build/
 

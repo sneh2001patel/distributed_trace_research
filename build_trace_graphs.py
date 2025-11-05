@@ -9,6 +9,8 @@ from tqdm import tqdm
 
 PATH = "./03_53_trace.csv"
 
+graph = Data(x=nodes_fea)
+
 
 # Load csv
 def load_trace_data(path):
