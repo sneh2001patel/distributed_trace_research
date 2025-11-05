@@ -27,39 +27,4 @@ class GCN(torch.nn.Module):
         return x
 
 
-# Unsupervised training
-def get_graph_embeddings(model, loader, device):
-    model.eval()
-    embeddings = []
-    with torch.no_grad():
-        for batch in loader:
-            batch = batch.to(device)
-            x = model.conv1(batch.x, batch.edge_index)
-            x = F.relu(x)
-            x = global_mean_pool(x, batch.batch)
-            embeddings.append(x.cpu())
-    return torch.cat(embeddings)
-
-
-def train_unsupervised(model, loader, optimizer, device, epochs=20):
-    model.train()
-    for epoch in range(epochs):
-        total_loss = 0
-        for batch in loader:
-            batch = batch.to(device)
-            optimizer.zero_grad()
-
-            # Forward pass (node embeddings)
-            x = model.conv1(batch.x, batch.edge_index)
-            x = F.relu(x)
-            x = model.conv2(x, batch.edge_index)
-            x = F.relu(x)
-
-            # Compute self-supervised loss
-            # (example: try to reconstruct node features)
-            recon = model.lin(global_mean_pool(x, batch.batch))
-            loss = F.mse_loss(recon, global_mean_pool(batch.x, batch.batch))
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item()
-        print(f"Epoch {epoch+1:02d} | Loss: {total_loss:.4f}")
+# Supervised training

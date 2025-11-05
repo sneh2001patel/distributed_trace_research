@@ -1,115 +1,106 @@
+import json
+import os
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
 import torch
 from sklearn.preprocessing import LabelEncoder
-from torch_geometric.data import Data
+from torch_geometric.data import Data, InMemoryDataset
+from torch_geometric.loader import DataLoader
 from tqdm import tqdm
 
-PATH = "./03_53_trace.csv"
 
-graph = Data(x=nodes_fea)
+def parse_trace_csv_to_graph(trace_csv, label):
+    df = pd.read_csv(trace_csv)
 
+    # Normalize column names (just in case of case differences)
+    df.columns = [c.strip().lower() for c in df.columns]
 
-# Load csv
-def load_trace_data(path):
-    df = pd.read_csv(path)
-    df = df.dropna(subset=["TraceID", "SpanID"])
-    return df
+    # Expecting these columns based on your schema
+    required = [
+        "spanid",
+        "parentid",
+        "duration",
+        "starttimeunixnano",
+        "endtimeunixnano",
+    ]
+    for r in required:
+        if r not in df.columns:
+            raise KeyError(f"Missing required column '{r}' in {trace_csv}")
 
+    # Build node mapping
+    node_ids = df["spanid"].astype(str).tolist()
+    id_to_idx = {sid: i for i, sid in enumerate(node_ids)}
 
-# Encode categorical feat into numeric
-def encode(df):
-    pod = LabelEncoder()
-    op = LabelEncoder()
-    df["pod"] = pod.fit_transform(df["PodName"].astype(str))
-    df["op"] = op.fit_transform(df["OperationName"].astype(str))
-    return df, pod, op
+    # Build edges (parent → child)
+    edge_src, edge_dst = [], []
+    for _, row in df.iterrows():
+        parent = str(row["parentid"])
+        if parent != "root" and parent in id_to_idx:
+            edge_src.append(id_to_idx[parent])
+            edge_dst.append(id_to_idx[str(row["spanid"])])
 
+    edge_index = torch.tensor([edge_src, edge_dst], dtype=torch.long)
 
-# build graphs
-def build_graphs(df):
-    graphs = []
+    # Build node features (Duration + relative timing)
+    start = df["starttimeunixnano"].to_numpy(dtype=float)
+    end = df["endtimeunixnano"].to_numpy(dtype=float)
+    dur = df["duration"].to_numpy(dtype=float)
 
-    for (
-        t_id,
-        g_df,
-    ) in tqdm(df.groupby("TraceID"), desc="Building graphs"):
-        G = nx.DiGraph()
+    # normalize to seconds
+    start_rel = (start - start.min()) / 1e9
+    end_rel = (end - start.min()) / 1e9
+    dur_norm = (dur - dur.min()) / (dur.max() - dur.min() + 1e-9)
 
-        for _, row in g_df.iterrows():
-            node_id = row["SpanID"]
-            G.add_node(
-                node_id,
-                PodName=row["PodName"],
-                OperationName=row["OperationName"],
-                pod=row["pod"],
-                op=row["op"],
-                duration=row["Duration"],
-            )
+    # Combine into node feature matrix [start_time, end_time, duration]
+    x = torch.tensor(list(zip(start_rel, end_rel, dur_norm)), dtype=torch.float)
 
-            if row["ParentID"] != "root" and row["ParentID"] in g_df["SpanID"].values:
-                G.add_edge(row["ParentID"], node_id)
+    y = torch.tensor([label], dtype=torch.long)
 
-        if len(G) > 1:
-            graphs.append((t_id, G))
-
-    return graphs
-
-
-# convert it to a input for pytorch
-def graph_to_data(t_id, G):
-    mapping = {n: i for i, n in enumerate(G.nodes())}
-    G = nx.relabel_nodes(G, mapping)
-
-    edge_index = torch.tensor(list(G.edges())).t().contiguous()
-
-    features = []
-    for _, attr in G.nodes(data=True):
-        features.append([attr["pod"], attr["op"], attr["duration"]])
-    x = torch.tensor(features, dtype=torch.float)
-    y = torch.zeros(x.size(0))
-
-    data = Data(x=x, edge_index=edge_index, y=y)
-    data.trace_id = t_id
-
-    return data
+    return Data(x=x, edge_index=edge_index, y=y)
 
 
-def display_graph(t_id, G):
+class TraceGraphDataset(InMemoryDataset):
+    def __init__(
+        self, normal_trace_path, abnormal_trace_path, transform=None, pre_transform=None
+    ):
+        self.normal_trace_path = normal_trace_path
+        self.abnormal_trace_path = abnormal_trace_path
+        super().__init__(".", transform, pre_transform)
+        self.data, self.slices = torch.load(self.processed_paths[0])
 
-    # Create readable labels: service + operation
-    labels = {}
-    for node, data in G.nodes(data=True):
-        service = data["PodName"].split("-")[0]
-        op_name = data["OperationName"].split("/")[-1]
-        labels[node] = f"{service.title()}\n{op_name.title()}"
+    @property
+    def processed_file_names(self):
+        return ["data.pt"]
 
-    # Hierarchical layout (top-down tree)
-    pos = nx.nx_pydot.graphviz_layout(G, prog="dot")
+    def process(self):
+        data_list = []
 
-    plt.figure(figsize=(10, 8))
-    nx.draw(
-        G, pos, with_labels=False, node_size=3000, node_color="skyblue", arrows=True
-    )
-    nx.draw_networkx_labels(G, pos, labels=labels, font_size=8)
-    plt.title(f"Trace DAG (Tree Layout) — TraceID={t_id[:8]}...")
-    plt.axis("off")
-    plt.show()
+        def load_traces(root, label):
+            for date in os.listdir(root):
+                trace_dir = os.path.join(root, date, "trace")
+                if not os.path.isdir(trace_dir):
+                    continue
+                for file in os.listdir(trace_dir):
+                    if file.endswith(".csv"):
+                        path = os.path.join(trace_dir, file)
+                        try:
+                            g = parse_trace_csv_to_graph(path, label)
+                            data_list.append(g)
+                        except Exception as e:
+                            print(f"⚠️ Skipping {path}: {e}")
+
+        load_traces(self.normal_trace_path, 0)  # 0 -> Normal
+        load_traces(self.abnormal_trace_path, 1)  # 1 -> Abnormal
+
+        data, slices = self.collate(data_list)
+
+        torch.save((data, slices), self.processed_paths[0])
 
 
-df = load_trace_data(PATH)
-df, pod, op = encode(df)
-
-graphs = build_graphs(df)  # To use for visualization
-data = [graph_to_data(t_id, G) for t_id, G in graphs]  # To use for models
-
-print(f"\n✅ Created {len(data)} GNN-ready graphs.")
-print("Example graph:")
-print(data[0])
-print(f"Total data: {len(data)}")
-
-torch.save(data, "trace_data.pt")
-t_1, G_1 = graphs[0]
-display_graph(t_1, G_1)
+dataset = TraceGraphDataset(
+    normal_trace_path="./normal_trace/", abnormal_trace_path="./abnormal_trace/"
+)
+print(len(dataset))

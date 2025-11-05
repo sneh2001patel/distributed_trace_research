@@ -1,9 +1,10 @@
 import torch
 import torch.nn.functional as F
+from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
 from torch_geometric.nn import GCNConv, global_mean_pool
 
-from GCN import GCN, get_graph_embeddings, train_unsupervised
+from GCN import GCN
 
 # Settings
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -13,18 +14,20 @@ criterion = torch.nn.CrossEntropyLoss()
 
 
 # load
-data = torch.load("trace_data.pt")
-print(f"Loaded {len(data)} trace graphs.")
-train_loader = DataLoader(data, batch_size=8, shuffle=True)
+data, slices = torch.load("./processed/data.pt")
 
-embeddings = get_graph_embeddings(model, train_loader, device)
-print(f"Embeddings: {embeddings.shape}")
+# reconstruct individual graphs
+num_graphs = len(slices["y"]) - 1
+graphs = []
 
-# train the model
-train_unsupervised(model, train_loader, optimizer, device)
+for i in range(num_graphs):
+    g = Data()
+    for key in data.keys():
+        item, s = data[key], slices[key]
+        g[key] = item[s[i] : s[i + 1]]
+    graphs.append(g)
 
-
-# torch.save(model.state_dict(), "gcn_trace_model.pt")
-#
-# model.load_state_dict(torch.load("gcn_trace_model.pt"))
-model.eval()
+for i, g in enumerate(graphs):
+    print(
+        f"Graph {i:02d} — Label: {int(g.y)} — Nodes: {g.num_nodes}, Edges: {g.num_edges}"
+    )
