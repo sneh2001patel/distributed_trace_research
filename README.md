@@ -17,3 +17,10 @@ codex resume 019a5066-3c65-77a1-8024-46600fc61299
 | Use attention pooling instead of global | +3-5%          |
 | Use deeper MLP head                     | +1-2%          |
 | Increase embeded_dim to 64-96           | +2-3%          |
+
+
+## Roadmap
+- [x] Code a  Graph-VAE Encoder
+- [x] Build a decoder that generates DAG traces
+- [ ] Implement a full end-to-end Encoder–Decoder training loop
+- [ ] Provide a research-paper-quality diagram of your architecture
