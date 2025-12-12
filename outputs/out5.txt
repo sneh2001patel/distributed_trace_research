@@ -1,0 +1,90 @@
+Epoch 001 | loss 6.6150 | node 5.4376 | edge 0.3889 | kl 3.3852 | beta 0.0031
+Epoch 002 | loss 6.0045 | node 4.9523 | edge 0.3441 | kl 3.1794 | beta 0.0063
+Epoch 003 | loss 5.6786 | node 4.6699 | edge 0.3275 | kl 2.7983 | beta 0.0094
+Epoch 004 | loss 5.3997 | node 4.4142 | edge 0.3176 | kl 2.6251 | beta 0.0125
+Epoch 005 | loss 5.1697 | node 4.2115 | edge 0.3073 | kl 2.3170 | beta 0.0156
+Epoch 006 | loss 4.9920 | node 4.0594 | edge 0.2981 | kl 2.0380 | beta 0.0188
+Epoch 007 | loss 4.8430 | node 3.9315 | edge 0.2914 | kl 1.7042 | beta 0.0219
+Epoch 008 | loss 4.6832 | node 3.7955 | edge 0.2843 | kl 1.3903 | beta 0.0250
+Epoch 009 | loss 4.6263 | node 3.7515 | edge 0.2805 | kl 1.1858 | beta 0.0281
+Epoch 010 | loss 4.5418 | node 3.6768 | edge 0.2780 | kl 0.9939 | beta 0.0312
+Epoch 011 | loss 4.4403 | node 3.5974 | edge 0.2711 | kl 0.8576 | beta 0.0344
+Epoch 012 | loss 4.3909 | node 3.5646 | edge 0.2662 | kl 0.7429 | beta 0.0375
+Epoch 013 | loss 4.3225 | node 3.5093 | edge 0.2621 | kl 0.6640 | beta 0.0406
+Epoch 014 | loss 4.2614 | node 3.4610 | edge 0.2583 | kl 0.5863 | beta 0.0438
+Epoch 015 | loss 4.1871 | node 3.3983 | edge 0.2548 | kl 0.5183 | beta 0.0469
+Epoch 016 | loss 4.1193 | node 3.3444 | edge 0.2506 | kl 0.4613 | beta 0.0500
+Epoch 017 | loss 4.0835 | node 3.3217 | edge 0.2468 | kl 0.4286 | beta 0.0500
+Epoch 018 | loss 4.0555 | node 3.3000 | edge 0.2452 | kl 0.3971 | beta 0.0500
+Epoch 019 | loss 4.0413 | node 3.2947 | edge 0.2427 | kl 0.3695 | beta 0.0500
+Epoch 020 | loss 3.9781 | node 3.2394 | edge 0.2405 | kl 0.3416 | beta 0.0500
+Epoch 021 | loss 3.9271 | node 3.2018 | edge 0.2364 | kl 0.3196 | beta 0.0500
+Epoch 022 | loss 3.9233 | node 3.1989 | edge 0.2366 | kl 0.2953 | beta 0.0500
+Epoch 023 | loss 3.9045 | node 3.1899 | edge 0.2335 | kl 0.2828 | beta 0.0500
+Epoch 024 | loss 3.8390 | node 3.1370 | edge 0.2296 | kl 0.2664 | beta 0.0500
+Epoch 025 | loss 3.8327 | node 3.1210 | edge 0.2330 | kl 0.2534 | beta 0.0500
+Epoch 026 | loss 3.8154 | node 3.1179 | edge 0.2286 | kl 0.2362 | beta 0.0500
+Epoch 027 | loss 3.7864 | node 3.0994 | edge 0.2253 | kl 0.2207 | beta 0.0500
+Epoch 028 | loss 3.7368 | node 3.0548 | edge 0.2238 | kl 0.2088 | beta 0.0500
+Epoch 029 | loss 3.7174 | node 3.0410 | edge 0.2221 | kl 0.2037 | beta 0.0500
+Epoch 030 | loss 3.7503 | node 3.0732 | edge 0.2224 | kl 0.1945 | beta 0.0500
+Epoch 031 | loss 3.7011 | node 3.0291 | edge 0.2210 | kl 0.1842 | beta 0.0500
+Epoch 032 | loss 3.6372 | node 2.9756 | edge 0.2176 | kl 0.1776 | beta 0.0500
+Epoch 033 | loss 3.6299 | node 2.9668 | edge 0.2182 | kl 0.1696 | beta 0.0500
+Epoch 034 | loss 3.6475 | node 2.9869 | edge 0.2175 | kl 0.1614 | beta 0.0500
+Epoch 035 | loss 3.6265 | node 2.9715 | edge 0.2158 | kl 0.1551 | beta 0.0500
+Epoch 036 | loss 3.5749 | node 2.9291 | edge 0.2128 | kl 0.1491 | beta 0.0500
+Epoch 037 | loss 3.5846 | node 2.9381 | edge 0.2131 | kl 0.1443 | beta 0.0500
+Epoch 038 | loss 3.5340 | node 2.8923 | edge 0.2116 | kl 0.1406 | beta 0.0500
+Epoch 039 | loss 3.5703 | node 2.9205 | edge 0.2144 | kl 0.1338 | beta 0.0500
+Epoch 040 | loss 3.4973 | node 2.8665 | edge 0.2082 | kl 0.1279 | beta 0.0500
+Epoch 041 | loss 3.5041 | node 2.8660 | edge 0.2106 | kl 0.1272 | beta 0.0500
+Epoch 042 | loss 3.5037 | node 2.8749 | edge 0.2075 | kl 0.1257 | beta 0.0500
+Epoch 043 | loss 3.4954 | node 2.8613 | edge 0.2093 | kl 0.1214 | beta 0.0500
+Epoch 044 | loss 3.5006 | node 2.8692 | edge 0.2085 | kl 0.1193 | beta 0.0500
+Epoch 045 | loss 3.4553 | node 2.8333 | edge 0.2054 | kl 0.1149 | beta 0.0500
+Epoch 046 | loss 3.4295 | node 2.8060 | edge 0.2060 | kl 0.1115 | beta 0.0500
+Epoch 047 | loss 3.4290 | node 2.8086 | edge 0.2050 | kl 0.1065 | beta 0.0500
+Epoch 048 | loss 3.4363 | node 2.8122 | edge 0.2063 | kl 0.1038 | beta 0.0500
+Epoch 049 | loss 3.4151 | node 2.8018 | edge 0.2027 | kl 0.1034 | beta 0.0500
+Epoch 050 | loss 3.3823 | node 2.7701 | edge 0.2024 | kl 0.1010 | beta 0.0500
+Epoch 051 | loss 3.4060 | node 2.7921 | edge 0.2029 | kl 0.1015 | beta 0.0500
+Epoch 052 | loss 3.3710 | node 2.7693 | edge 0.1990 | kl 0.0980 | beta 0.0500
+Epoch 053 | loss 3.3608 | node 2.7455 | edge 0.2035 | kl 0.0960 | beta 0.0500
+Epoch 054 | loss 3.3596 | node 2.7567 | edge 0.1994 | kl 0.0947 | beta 0.0500
+Epoch 055 | loss 3.3558 | node 2.7532 | edge 0.1993 | kl 0.0943 | beta 0.0500
+Epoch 056 | loss 3.3276 | node 2.7222 | edge 0.2002 | kl 0.0954 | beta 0.0500
+Epoch 057 | loss 3.3132 | node 2.7171 | edge 0.1971 | kl 0.0959 | beta 0.0500
+Epoch 058 | loss 3.3054 | node 2.7128 | edge 0.1959 | kl 0.0976 | beta 0.0500
+Epoch 059 | loss 3.3456 | node 2.7390 | edge 0.2006 | kl 0.0946 | beta 0.0500
+Epoch 060 | loss 3.2967 | node 2.7038 | edge 0.1962 | kl 0.0895 | beta 0.0500
+Epoch 061 | loss 3.2833 | node 2.6929 | edge 0.1953 | kl 0.0871 | beta 0.0500
+Epoch 062 | loss 3.2668 | node 2.6787 | edge 0.1946 | kl 0.0867 | beta 0.0500
+Epoch 063 | loss 3.2575 | node 2.6756 | edge 0.1926 | kl 0.0846 | beta 0.0500
+Epoch 064 | loss 3.2668 | node 2.6764 | edge 0.1954 | kl 0.0868 | beta 0.0500
+Epoch 065 | loss 3.2590 | node 2.6776 | edge 0.1924 | kl 0.0862 | beta 0.0500
+Epoch 066 | loss 3.2536 | node 2.6596 | edge 0.1966 | kl 0.0839 | beta 0.0500
+Epoch 067 | loss 3.2272 | node 2.6417 | edge 0.1938 | kl 0.0834 | beta 0.0500
+Epoch 068 | loss 3.2315 | node 2.6532 | edge 0.1914 | kl 0.0833 | beta 0.0500
+Epoch 069 | loss 3.2787 | node 2.6905 | edge 0.1946 | kl 0.0848 | beta 0.0500
+Epoch 070 | loss 3.2092 | node 2.6328 | edge 0.1908 | kl 0.0826 | beta 0.0500
+Epoch 071 | loss 3.2139 | node 2.6354 | edge 0.1914 | kl 0.0836 | beta 0.0500
+Epoch 072 | loss 3.1707 | node 2.6000 | edge 0.1888 | kl 0.0831 | beta 0.0500
+Epoch 073 | loss 3.1695 | node 2.6000 | edge 0.1884 | kl 0.0831 | beta 0.0500
+Epoch 074 | loss 3.1919 | node 2.6164 | edge 0.1905 | kl 0.0832 | beta 0.0500
+Epoch 075 | loss 3.1932 | node 2.6142 | edge 0.1917 | kl 0.0818 | beta 0.0500
+Epoch 076 | loss 3.1781 | node 2.6126 | edge 0.1872 | kl 0.0792 | beta 0.0500
+Epoch 077 | loss 3.1463 | node 2.5816 | edge 0.1869 | kl 0.0789 | beta 0.0500
+Epoch 078 | loss 3.2001 | node 2.6247 | edge 0.1905 | kl 0.0826 | beta 0.0500
+Epoch 079 | loss 3.1512 | node 2.5872 | edge 0.1867 | kl 0.0804 | beta 0.0500
+Epoch 080 | loss 3.1148 | node 2.5599 | edge 0.1836 | kl 0.0788 | beta 0.0500
+{'total_nodes': 106020, 'pod_acc': 0.8057913601207319, 'op_acc': 0.5509149217128844, 'dur_mae': 33385.22327067748, 'edge_precision': 0.9278617710583154, 'edge_recall': 0.22736064201379869, 'edge_f1': 0.3652270689708474}
+
+=== Reconstruction Evaluation ===
+Total nodes evaluated: 106020
+Pod accuracy: 80.58%
+Op accuracy:  55.09%
+Duration MAE: 33385.2233
+Edge precision: 92.79%
+Edge recall:    22.74%
+Edge F1:        36.52%

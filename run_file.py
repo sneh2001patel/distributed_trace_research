@@ -52,7 +52,7 @@ dec = GNNDecoder(
     max_nodes=256,
 ).to(device)
 
-run_training(dataset, enc, dec, device, epochs=80, batch_size=2, lr=3e-4, beta_final=0.05)
+run_training(dataset, enc, dec, device, epochs=200, batch_size=2, lr=3e-4, beta_final=0.05, use_class_weights=False)
 metrics = evaluate_reconstruction(dataset, enc, dec, device, edge_threshold=0.8)
 print(metrics)
 

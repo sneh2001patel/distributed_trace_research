@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.loader import DataLoader
 from torch_geometric.nn import GCNConv, global_mean_pool
+from collections import Counter
 
 
 def _log_normalize_duration(raw_duration: torch.Tensor, mean: torch.Tensor, std: torch.Tensor) -> torch.Tensor:
@@ -213,14 +214,42 @@ def kl_loss(mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
     return kl_per_sample.mean()
 
 
+def compute_class_weights(dataset, max_ratio: float = 5.0):
+    """
+    Compute inverse-frequency class weights for pod and op.
+    We clamp extremely rare classes to avoid unstable gradients.
+    Returns (pod_weight, op_weight) CPU tensors sized [num_classes].
+    """
+    pod_counter = Counter()
+    op_counter = Counter()
+    for g in dataset:
+        x = g.x
+        pod_counter.update(x[:, 0].long().tolist())
+        op_counter.update(x[:, 1].long().tolist())
+
+    def _make_weight(counter):
+        num_classes = max(counter.keys()) + 1
+        freq = torch.ones(num_classes, dtype=torch.float)
+        for k, v in counter.items():
+            freq[k] = v
+        inv = 1.0 / (freq + 1e-8)
+        inv = inv / inv.mean()  # normalize to keep average weight ~=1
+        max_w = inv.median() * max_ratio
+        inv = torch.clamp(inv, max=max_w)
+        return inv
+
+    return _make_weight(pod_counter), _make_weight(op_counter)
+
+
 def node_recon_loss(real_x: torch.Tensor, pod_logits: torch.Tensor, op_logits: torch.Tensor, duration_pred: torch.Tensor,
-                    duration_mean: torch.Tensor, duration_std: torch.Tensor) -> torch.Tensor:
+                    duration_mean: torch.Tensor, duration_std: torch.Tensor,
+                    pod_weight: torch.Tensor = None, op_weight: torch.Tensor = None) -> torch.Tensor:
     pod_real = real_x[:, 0].long()
     op_real = real_x[:, 1].long()
     duration_real = real_x[:, 2]
 
-    pod_loss = F.cross_entropy(pod_logits, pod_real)
-    op_loss = F.cross_entropy(op_logits, op_real)
+    pod_loss = F.cross_entropy(pod_logits, pod_real, weight=pod_weight)
+    op_loss = F.cross_entropy(op_logits, op_real, weight=op_weight)
 
     target_duration = _log_normalize_duration(duration_real, duration_mean, duration_std)
     duration_loss = F.l1_loss(duration_pred.squeeze(-1), target_duration)
@@ -258,9 +287,11 @@ def total_vae_loss(real_data,
                    mu_g, logvar_g,
                    mu_n, logvar_n,
                    duration_mean, duration_std,
+                   pod_weight=None, op_weight=None,
                    beta: float = 0.01,
                    edge_weight: float = 3.0):
-    node_l = node_recon_loss(real_data.x, pod_logits, op_logits, duration_pred, duration_mean, duration_std)
+    node_l = node_recon_loss(real_data.x, pod_logits, op_logits, duration_pred, duration_mean, duration_std,
+                             pod_weight=pod_weight, op_weight=op_weight)
     edge_l = edge_recon_loss(real_data.edge_index, pred_edge_logits, real_data.num_nodes, real_data.x.device)
     kl_g = kl_loss(mu_g, logvar_g)
     kl_n = kl_loss(mu_n, logvar_n)
@@ -381,6 +412,8 @@ def train_vae_epoch(encoder, decoder, loader, optimizer, device, beta: float):
             logvar_n,
             encoder.duration_mean,
             encoder.duration_std,
+            pod_weight=getattr(encoder, "pod_weight", None),
+            op_weight=getattr(encoder, "op_weight", None),
             beta=beta,
         )
 
@@ -402,13 +435,20 @@ def train_vae_epoch(encoder, decoder, loader, optimizer, device, beta: float):
 
 
 def run_training(dataset, encoder, decoder, device, epochs: int = 80, batch_size: int = 2, lr: float = 3e-4,
-                 beta_final: float = 0.05):
+                 beta_final: float = 0.05, use_class_weights: bool = True):
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     optimizer = torch.optim.Adam(
         list(encoder.parameters()) + list(decoder.parameters()),
         lr=lr,
         weight_decay=1e-4,
     )
+
+    if use_class_weights:
+        pod_w_cpu, op_w_cpu = compute_class_weights(dataset)
+        encoder.pod_weight = pod_w_cpu.to(device)
+        encoder.op_weight = op_w_cpu.to(device)
+    else:
+        encoder.pod_weight = encoder.op_weight = None
 
     warmup = max(5, int(epochs * 0.2))
     for epoch in range(1, epochs + 1):
