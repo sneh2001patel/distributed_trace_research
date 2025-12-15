@@ -243,13 +243,14 @@ def compute_class_weights(dataset, max_ratio: float = 5.0):
 
 def node_recon_loss(real_x: torch.Tensor, pod_logits: torch.Tensor, op_logits: torch.Tensor, duration_pred: torch.Tensor,
                     duration_mean: torch.Tensor, duration_std: torch.Tensor,
-                    pod_weight: torch.Tensor = None, op_weight: torch.Tensor = None) -> torch.Tensor:
+                    pod_weight: torch.Tensor = None, op_weight: torch.Tensor = None,
+                    op_loss_scale: float = 1.0) -> torch.Tensor:
     pod_real = real_x[:, 0].long()
     op_real = real_x[:, 1].long()
     duration_real = real_x[:, 2]
 
     pod_loss = F.cross_entropy(pod_logits, pod_real, weight=pod_weight)
-    op_loss = F.cross_entropy(op_logits, op_real, weight=op_weight)
+    op_loss = F.cross_entropy(op_logits, op_real, weight=op_weight) * op_loss_scale
 
     target_duration = _log_normalize_duration(duration_real, duration_mean, duration_std)
     duration_loss = F.l1_loss(duration_pred.squeeze(-1), target_duration)
@@ -287,11 +288,11 @@ def total_vae_loss(real_data,
                    mu_g, logvar_g,
                    mu_n, logvar_n,
                    duration_mean, duration_std,
-                   pod_weight=None, op_weight=None,
+                   pod_weight=None, op_weight=None, op_loss_scale: float = 1.0,
                    beta: float = 0.01,
                    edge_weight: float = 3.0):
     node_l = node_recon_loss(real_data.x, pod_logits, op_logits, duration_pred, duration_mean, duration_std,
-                             pod_weight=pod_weight, op_weight=op_weight)
+                             pod_weight=pod_weight, op_weight=op_weight, op_loss_scale=op_loss_scale)
     edge_l = edge_recon_loss(real_data.edge_index, pred_edge_logits, real_data.num_nodes, real_data.x.device)
     kl_g = kl_loss(mu_g, logvar_g)
     kl_n = kl_loss(mu_n, logvar_n)
@@ -380,7 +381,7 @@ def _ensure_batch(data):
     return data
 
 
-def train_vae_epoch(encoder, decoder, loader, optimizer, device, beta: float):
+def train_vae_epoch(encoder, decoder, loader, optimizer, device, beta: float, op_loss_scale: float = 1.0):
     encoder.train()
     decoder.train()
 
@@ -414,6 +415,7 @@ def train_vae_epoch(encoder, decoder, loader, optimizer, device, beta: float):
             encoder.duration_std,
             pod_weight=getattr(encoder, "pod_weight", None),
             op_weight=getattr(encoder, "op_weight", None),
+            op_loss_scale=op_loss_scale,
             beta=beta,
         )
 
@@ -435,7 +437,7 @@ def train_vae_epoch(encoder, decoder, loader, optimizer, device, beta: float):
 
 
 def run_training(dataset, encoder, decoder, device, epochs: int = 80, batch_size: int = 2, lr: float = 3e-4,
-                 beta_final: float = 0.05, use_class_weights: bool = True):
+                 beta_final: float = 0.05, use_class_weights: bool = True, op_loss_scale: float = 1.0):
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     optimizer = torch.optim.Adam(
         list(encoder.parameters()) + list(decoder.parameters()),
@@ -453,7 +455,7 @@ def run_training(dataset, encoder, decoder, device, epochs: int = 80, batch_size
     warmup = max(5, int(epochs * 0.2))
     for epoch in range(1, epochs + 1):
         beta = beta_final * min(1.0, epoch / warmup)
-        loss, node_l, edge_l, kl_l = train_vae_epoch(encoder, decoder, loader, optimizer, device, beta)
+        loss, node_l, edge_l, kl_l = train_vae_epoch(encoder, decoder, loader, optimizer, device, beta, op_loss_scale)
         print(
             f"Epoch {epoch:03d} | loss {loss:.4f} | node {node_l:.4f} | edge {edge_l:.4f} | kl {kl_l:.4f} | beta {beta:.4f}"
         )

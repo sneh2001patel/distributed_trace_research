@@ -81,3 +81,16 @@ Duration MAE: 19535.0017
 Edge precision: 82.18%
 Edge recall:    46.27%
 Edge F1:        59.20%
+
+Best results with the value:
+when use_class_weights = False, op_loss_scale = 1.2, edge_threshold = 0.8
+
+=== Reconstruction Evaluation ===
+Total nodes evaluated: 106020
+Pod accuracy: 81.49%
+Op accuracy:  57.05%
+Duration MAE: 19450406.2057
+Edge precision: 77.94%
+Edge recall:    52.54%
+Edge F1:        62.77%
+
