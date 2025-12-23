@@ -158,7 +158,9 @@ class GNNDecoder(nn.Module):
         self.gnn_layers = nn.ModuleList(
             [GCNConv(hidden_dim, hidden_dim) for _ in range(num_gnn_layers)]
         )
-        self.gnn_norms = nn.ModuleList([nn.LayerNorm(hidden_dim) for _ in range(num_gnn_layers)])
+        self.gnn_norms = nn.ModuleList(
+            [nn.LayerNorm(hidden_dim) for _ in range(num_gnn_layers)]
+        )
 
         self.fuse = nn.Sequential(
             nn.Linear(hidden_dim + encoder_hidden_dim, hidden_dim),
@@ -478,7 +480,14 @@ def _ensure_batch(data):
 
 
 def train_vae_epoch(
-    encoder, decoder, loader, optimizer, device, beta: float, op_loss_scale: float = 1.0
+    encoder,
+    decoder,
+    loader,
+    optimizer,
+    device,
+    beta: float,
+    op_loss_scale: float = 1.0,
+    edge_weight: float = 3.0,
 ):
     encoder.train()
     decoder.train()
@@ -515,6 +524,7 @@ def train_vae_epoch(
             op_weight=getattr(encoder, "op_weight", None),
             op_loss_scale=op_loss_scale,
             beta=beta,
+            edge_weight=edge_weight,
         )
 
         loss.backward()
@@ -545,6 +555,8 @@ def run_training(
     beta_final: float = 0.05,
     use_class_weights: bool = True,
     op_loss_scale: float = 1.0,
+    edge_weight: float = 3.0,
+    class_weight_max_ratio: float = 5.0,
 ):
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     optimizer = torch.optim.Adam(
@@ -554,7 +566,9 @@ def run_training(
     )
 
     if use_class_weights:
-        pod_w_cpu, op_w_cpu = compute_class_weights(dataset)
+        pod_w_cpu, op_w_cpu = compute_class_weights(
+            dataset, max_ratio=class_weight_max_ratio
+        )
         encoder.pod_weight = pod_w_cpu.to(device)
         encoder.op_weight = op_w_cpu.to(device)
     else:
@@ -564,7 +578,14 @@ def run_training(
     for epoch in range(1, epochs + 1):
         beta = beta_final * min(1.0, epoch / warmup)
         loss, node_l, edge_l, kl_l = train_vae_epoch(
-            encoder, decoder, loader, optimizer, device, beta, op_loss_scale
+            encoder,
+            decoder,
+            loader,
+            optimizer,
+            device,
+            beta,
+            op_loss_scale,
+            edge_weight,
         )
         print(
             f"Epoch {epoch:03d} | loss {loss:.4f} | node {node_l:.4f} | edge {edge_l:.4f} | kl {kl_l:.4f} | beta {beta:.4f}"

@@ -70,6 +70,8 @@ run_training(
     beta_final=0.02,
     use_class_weights=False,
     op_loss_scale=1.6,
+    edge_weight=1.0,
+    class_weight_max_ratio=10.0,
 )
 metrics = evaluate_reconstruction(dataset, enc, dec, device, edge_threshold=0.8)
 print(metrics)

@@ -1,3 +1,4 @@
+---------------- SN Dataset --------------------------------------------------
 Epoch 001 | loss 6.4058 | node 4.3595 | edge 0.6800 | kl 4.9625 | beta 0.0013
 Epoch 002 | loss 2.4153 | node 1.2324 | edge 0.3858 | kl 10.2163 | beta 0.0025
 Epoch 003 | loss 1.4763 | node 0.5986 | edge 0.2812 | kl 9.1128 | beta 0.0037
@@ -208,4 +209,9 @@ Duration MAE: 1848391.4517
 Edge precision: 94.36%
 Edge recall:    99.85%
 Edge F1:        97.03%
+
+lr = 3e-4
+beta_final = 0.05 
+use_class_weights = False
+op_loss_scale = 1.2-1.6
 
