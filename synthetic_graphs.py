@@ -1,0 +1,137 @@
+import random
+from typing import List, Tuple
+
+import torch
+from torch_geometric.data import Data
+from torch_geometric.utils import to_undirected
+
+from vae_backup import GNNDecoder, _log_denormalize_duration
+
+
+def load_decoder(weights_path: str, device: torch.device):
+    checkpoint = torch.load(weights_path, map_location=device)
+    cfg = checkpoint["config"]
+    dec = GNNDecoder(
+        latent_dim=cfg["latent_dim"],
+        hidden_dim=cfg["hidden_dim"],
+        n_pod_classes=cfg["num_pods"],
+        n_op_classes=cfg["num_ops"],
+        encoder_hidden_dim=cfg.get("encoder_hidden_dim", cfg["hidden_dim"]),
+        max_nodes=cfg.get("max_nodes", 256),
+        head_hidden_dim=cfg.get("head_hidden_dim", cfg["hidden_dim"] * 2),
+        head_dropout=cfg.get("head_dropout", 0.3),
+    ).to(device)
+    dec.load_state_dict(checkpoint["decoder_state"])
+    dec.eval()
+    return dec, cfg
+
+
+def load_tt_decoder(weights_path: str, device: torch.device):
+    return load_decoder(weights_path, device)
+
+
+@torch.no_grad()
+def generate_synthetic_graph(
+    decoder: GNNDecoder,
+    num_nodes: int,
+    duration_mean: float,
+    duration_std: float,
+    device: torch.device,
+    edge_threshold: float = 0.9,
+    sample_edges: bool = False,
+    sample_nodes: bool = False,
+    edge_dropout: float = 0.0,
+    duration_noise: float = 0.0,
+    threshold_jitter: float = 0.0,
+) -> Data:
+    z_g = torch.randn(decoder.latent_dim, device=device)
+    z_n = torch.randn(num_nodes, decoder.latent_dim, device=device)
+    enc_h = torch.zeros(num_nodes, decoder.encoder_hidden_dim, device=device)
+
+    pod_logits, op_logits, duration_pred, edge_logits = decoder.decode_for_training(
+        z_g, z_n, enc_h
+    )
+
+    if sample_nodes:
+        pod_probs = torch.softmax(pod_logits, dim=1)
+        op_probs = torch.softmax(op_logits, dim=1)
+        pod_ids = torch.multinomial(pod_probs, 1).squeeze(1)
+        op_ids = torch.multinomial(op_probs, 1).squeeze(1)
+    else:
+        pod_ids = pod_logits.argmax(dim=1)
+        op_ids = op_logits.argmax(dim=1)
+
+    duration = _log_denormalize_duration(
+        duration_pred.squeeze(-1),
+        torch.tensor(duration_mean, device=device),
+        torch.tensor(duration_std, device=device),
+    )
+    if duration_noise > 0.0:
+        duration = torch.clamp(
+            duration + torch.randn_like(duration) * duration_noise, min=0.0
+        )
+
+    edge_probs = torch.sigmoid(edge_logits)
+    if threshold_jitter > 0.0:
+        edge_threshold = float(
+            torch.clamp(
+                torch.tensor(edge_threshold, device=device)
+                + torch.randn((), device=device) * threshold_jitter,
+                min=0.05,
+                max=0.95,
+            ).item()
+        )
+    mask = torch.triu(
+        torch.ones(num_nodes, num_nodes, device=device), diagonal=1
+    ).bool()
+    if sample_edges:
+        edge_keep = (torch.rand_like(edge_probs) < edge_probs) & mask
+    else:
+        edge_keep = (edge_probs > edge_threshold) & mask
+    if edge_dropout > 0.0:
+        keep_mask = torch.rand_like(edge_keep.float()) > edge_dropout
+        edge_keep = edge_keep & keep_mask.bool()
+    edge_index = edge_keep.nonzero(as_tuple=False).t().contiguous()
+    edge_index = to_undirected(edge_index, num_nodes=num_nodes)
+
+    x = torch.stack([pod_ids, op_ids, duration], dim=1).float()
+    return Data(x=x, edge_index=edge_index)
+
+
+def generate_synthetic_dataset(
+    num_graphs: int,
+    num_nodes: Tuple[int, int],
+    weights_path: str = "./processed/tt_vae_weights.pt",
+    device: torch.device = None,
+    edge_threshold: float = 0.9,
+    sample_edges: bool = False,
+    sample_nodes: bool = False,
+    edge_dropout: float = 0.0,
+    duration_noise: float = 0.0,
+    threshold_jitter: float = 0.0,
+) -> List[Data]:
+    device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    decoder, cfg = load_tt_decoder(weights_path, device)
+    graphs: List[Data] = []
+    for _ in range(num_graphs):
+        if isinstance(num_nodes, tuple):
+            n_nodes = random.randint(*num_nodes)
+        else:
+            n_nodes = num_nodes
+        graphs.append(
+            generate_synthetic_graph(
+                decoder,
+                n_nodes,
+                cfg["duration_mean"],
+                cfg["duration_std"],
+                device,
+                edge_threshold=edge_threshold,
+                sample_edges=sample_edges,
+                sample_nodes=sample_nodes,
+                edge_dropout=edge_dropout,
+                duration_noise=duration_noise,
+                threshold_jitter=threshold_jitter,
+            )
+        )
+    return graphs
+

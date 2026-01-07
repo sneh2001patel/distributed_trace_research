@@ -31,7 +31,7 @@ class LoadDataset(InMemoryDataset):
 
 
 def main():
-    datapath = "./processed/SN_data.pt.pt"
+    datapath = "./processed/SN_data.pt"
     dataset = LoadDataset(datapath)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

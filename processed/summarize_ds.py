@@ -11,7 +11,9 @@ class LoadDataset(InMemoryDataset):
     Label: 0 for SN_Dataset, 1 for TT_Dataset.
     """
 
-    def __init__(self, datapath="../processed/TT_data.pt") -> None:
+    def __init__(
+        self, datapath="../processed/not_exact_replica/TT_synthetic.pt"
+    ) -> None:
         torch.serialization.add_safe_globals([Data, DataEdgeAttr, DataTensorAttr])
         super().__init__(".")
         data, slices = torch.load(datapath, weights_only=False)
@@ -25,11 +27,16 @@ def summarize(dataset: LoadDataset):
     total_graphs = len(dataset)
     labels = []
     total_nodes = 0
+    min_nodes = float("inf")
+    max_nodes = 0
 
     for g in dataset:
         if hasattr(g, "y") and g.y is not None:
             labels.append(int(g.y.item()))
+        num_nodes = g.num_nodes
         total_nodes += g.num_nodes
+        min_nodes = min(min_nodes, num_nodes)
+        max_nodes = max(max_nodes, num_nodes)
 
     if labels:
         labels_t = torch.tensor(labels)
@@ -45,6 +52,8 @@ def summarize(dataset: LoadDataset):
     print(f"\nTotal graphs: {total_graphs}")
     print(f"Total nodes across all graphs: {total_nodes}")
     print(f"Average nodes per graph: {total_nodes/total_graphs:.2f}")
+    print(f"Min nodes in a graph {min_nodes}")
+    print(f"Max nodes in a graph {max_nodes}")
 
     # Feature info
     x = dataset.data.x

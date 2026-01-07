@@ -361,6 +361,7 @@ def total_vae_loss(
     op_loss_scale: float = 1.0,
     beta: float = 0.01,
     edge_weight: float = 3.0,
+    edge_neg_weight: float = 2.0,
 ):
     node_l = node_recon_loss(
         real_data.x,
@@ -374,7 +375,11 @@ def total_vae_loss(
         op_loss_scale=op_loss_scale,
     )
     edge_l = edge_recon_loss(
-        real_data.edge_index, pred_edge_logits, real_data.num_nodes, real_data.x.device
+        real_data.edge_index,
+        pred_edge_logits,
+        real_data.num_nodes,
+        real_data.x.device,
+        neg_weight=edge_neg_weight,
     )
     kl_g = kl_loss(mu_g, logvar_g)
     kl_n = kl_loss(mu_n, logvar_n)
@@ -488,6 +493,7 @@ def train_vae_epoch(
     beta: float,
     op_loss_scale: float = 1.0,
     edge_weight: float = 3.0,
+    edge_neg_weight: float = 2.0,
 ):
     encoder.train()
     decoder.train()
@@ -525,6 +531,7 @@ def train_vae_epoch(
             op_loss_scale=op_loss_scale,
             beta=beta,
             edge_weight=edge_weight,
+            edge_neg_weight=edge_neg_weight,
         )
 
         loss.backward()
@@ -556,6 +563,7 @@ def run_training(
     use_class_weights: bool = True,
     op_loss_scale: float = 1.0,
     edge_weight: float = 3.0,
+    edge_neg_weight: float = 2.0,
     class_weight_max_ratio: float = 5.0,
 ):
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
@@ -586,6 +594,7 @@ def run_training(
             beta,
             op_loss_scale,
             edge_weight,
+            edge_neg_weight,
         )
         print(
             f"Epoch {epoch:03d} | loss {loss:.4f} | node {node_l:.4f} | edge {edge_l:.4f} | kl {kl_l:.4f} | beta {beta:.4f}"
