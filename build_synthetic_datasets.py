@@ -37,12 +37,12 @@ def build_synthetic_dataset(
     node_counts = [real_ds.get(i).num_nodes for i in range(len(real_ds))]
     target = target_count or len(node_counts)
     syn_graphs = []
-    if target <= len(node_counts):
-        sampled_counts = random.sample(node_counts, target)
-    else:
-        sampled_counts = random.choices(node_counts, k=target)
+    # if target <= len(node_counts):
+    #     sampled_counts = random.sample(node_counts, target)
+    # else:
+    #     sampled_counts = random.choices(node_counts, k=target)
 
-    for n_nodes in sampled_counts:
+    for n_nodes in node_counts:
         syn_graph = generate_synthetic_graph(
             decoder,
             num_nodes=n_nodes,
@@ -142,7 +142,7 @@ def main():
     build_synthetic_dataset(
         "./processed/TT_data.pt",
         "./weights/tt_vae_weights.pt",
-        "./processed/exact_replica/TT_synthetic.pt",
+        "./processed/exact_replica/prop_order_TT_synthetic.pt",
         y_label=1,
         target_count=None,
         edge_threshold=0.9,
@@ -152,7 +152,7 @@ def main():
     build_synthetic_dataset(
         "./processed/SN_data.pt",
         "./weights/sn_vae_weights.pt",
-        "./processed/exact_replica/SN_synthetic.pt",
+        "./processed/exact_replica/prop_order_SN_synthetic.pt",
         y_label=0,
         target_count=None,
         edge_threshold=0.9,
@@ -161,24 +161,24 @@ def main():
 
     # Generate Dataset with liberty
     # TT
-    build_synthetic_dataset_wo_real_data(
-        "./weights/tt_vae_weights.pt",
-        "./processed/not_exact_replica/TT_synthetic.pt",
-        y_label=1,
-        range_n_nodes=(1, 23),
-        edge_threshold=0.9,
-        **aug,
-    )
-
-    # SN
-    build_synthetic_dataset_wo_real_data(
-        "./weights/sn_vae_weights.pt",
-        "./processed/not_exact_replica/SN_synthetic.pt",
-        y_label=0,
-        range_n_nodes=(3, 30),
-        edge_threshold=0.9,
-        **aug,
-    )
+    # build_synthetic_dataset_wo_real_data(
+    #     "./weights/tt_vae_weights.pt",
+    #     "./processed/not_exact_replica/TT_synthetic.pt",
+    #     y_label=1,
+    #     range_n_nodes=(1, 23),
+    #     edge_threshold=0.9,
+    #     **aug,
+    # )
+    #
+    # # SN
+    # build_synthetic_dataset_wo_real_data(
+    #     "./weights/sn_vae_weights.pt",
+    #     "./processed/not_exact_replica/SN_synthetic.pt",
+    #     y_label=0,
+    #     range_n_nodes=(3, 30),
+    #     edge_threshold=0.9,
+    #     **aug,
+    # )
 
 
 if __name__ == "__main__":
