@@ -37,12 +37,12 @@ def build_synthetic_dataset(
     node_counts = [real_ds.get(i).num_nodes for i in range(len(real_ds))]
     target = target_count or len(node_counts)
     syn_graphs = []
-    if target <= len(node_counts):
-        sampled_counts = random.sample(node_counts, target)
-    else:
-        sampled_counts = random.choices(node_counts, k=target)
+    # if target <= len(node_counts):
+    #     sampled_counts = random.sample(node_counts, target)
+    # else:
+    #     sampled_counts = random.choices(node_counts, k=target)
 
-    for n_nodes in sampled_counts:
+    for n_nodes in node_counts:
         syn_graph = generate_synthetic_graph(
             decoder,
             num_nodes=n_nodes,

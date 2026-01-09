@@ -1,9 +1,10 @@
 import os
 import random
+import warnings
 
 import torch
 import torch.nn.functional as F
-from dataset import load_graphs, prepare_datasets
+from dataset import load_graphs, prepare_datasets, prepare_mixed_datasets
 from model import GraphClassifier
 from torch_geometric.loader import DataLoader
 
@@ -108,15 +109,21 @@ def _per_class_prf(cm: torch.Tensor):
 
 def main():
     seed = 42
+    os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
     random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+    try:
+        torch.use_deterministic_algorithms(True)
+    except Exception as exc:
+        warnings.warn(f"Deterministic algorithms not fully enabled: {exc}")
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
     processed_dir = os.path.abspath(os.path.join(base_dir, "..", "processed"))
     exact_dir = os.path.join(processed_dir, "exact_replica")
+    not_exact_dir = os.path.join(processed_dir, "exact_replica")
 
     syn_sn = os.path.join(exact_dir, "SN_synthetic.pt")
     syn_tt = os.path.join(exact_dir, "TT_synthetic.pt")
@@ -124,11 +131,12 @@ def main():
         syn_sn = os.path.join(processed_dir, "SN_synthetic.pt")
         syn_tt = os.path.join(processed_dir, "TT_synthetic.pt")
 
-    train_ds, val_ds, test_ds = prepare_datasets(
+    train_ds, val_ds, test_ds = prepare_mixed_datasets(
         syn_sn_path=syn_sn,
         syn_tt_path=syn_tt,
         real_sn_path=os.path.join(processed_dir, "SN_data.pt"),
         real_tt_path=os.path.join(processed_dir, "TT_data.pt"),
+        real_train_ratio=0,
         val_ratio=0.2,
         seed=42,
     )
@@ -202,8 +210,8 @@ def main():
     print(f"Per-class accuracy: SN={per_class[0]:.3f}, TT={per_class[1]:.3f}")
     print(
         "Per-class PRF: "
-        f"SN Precision={prf[0][0]:.3f} Recall={prf[0][1]:.3f} F1={prf[0][2]:.3f} | "
-        f"TT Precision={prf[1][0]:.3f} Recall={prf[1][1]:.3f} F1={prf[1][2]:.3f}"
+        f"SN Precision={prf[0][0]:.3f} R={prf[0][1]:.3f} F1={prf[0][2]:.3f} | "
+        f"TT Precision={prf[1][0]:.3f} R={prf[1][1]:.3f} F1={prf[1][2]:.3f}"
     )
 
 

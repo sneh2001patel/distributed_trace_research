@@ -11,9 +11,7 @@ class LoadDataset(InMemoryDataset):
     Label: 0 for SN_Dataset, 1 for TT_Dataset.
     """
 
-    def __init__(
-        self, datapath="../processed/not_exact_replica/TT_synthetic.pt"
-    ) -> None:
+    def __init__(self, datapath="../processed/SN_data.pt") -> None:
         torch.serialization.add_safe_globals([Data, DataEdgeAttr, DataTensorAttr])
         super().__init__(".")
         data, slices = torch.load(datapath, weights_only=False)
