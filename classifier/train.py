@@ -117,9 +117,10 @@ def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     processed_dir = os.path.abspath(os.path.join(base_dir, "..", "processed"))
     exact_dir = os.path.join(processed_dir, "exact_replica")
+    not_exact_dir = os.path.join(processed_dir, "not_exact_replica")
 
-    syn_sn = os.path.join(exact_dir, "SN_synthetic.pt")
-    syn_tt = os.path.join(exact_dir, "TT_synthetic.pt")
+    syn_sn = os.path.join(not_exact_dir, "SN_synthetic.pt")
+    syn_tt = os.path.join(not_exact_dir, "TT_synthetic.pt")
     if not os.path.exists(syn_sn) or not os.path.exists(syn_tt):
         syn_sn = os.path.join(processed_dir, "SN_synthetic.pt")
         syn_tt = os.path.join(processed_dir, "TT_synthetic.pt")

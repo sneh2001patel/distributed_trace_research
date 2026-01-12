@@ -11,12 +11,11 @@ class LoadDataset(InMemoryDataset):
     Label: 0 for SN_Dataset, 1 for TT_Dataset.
     """
 
-    def __init__(
-        self, datapath="../processed/not_exact_replica/TT_synthetic.pt"
-    ) -> None:
+    def __init__(self, datapath="../processed/SN_data.pt") -> None:
         torch.serialization.add_safe_globals([Data, DataEdgeAttr, DataTensorAttr])
         super().__init__(".")
         data, slices = torch.load(datapath, weights_only=False)
+        self.name = "SN" if "SN" in datapath else "TT"
         self.data, self.slices = data, slices
 
     def get(self, idx):
@@ -44,7 +43,7 @@ def summarize(dataset: LoadDataset):
         print("Label distribution:")
         for u, c in zip(unique.tolist(), counts.tolist()):
             pct = 100.0 * c / total_graphs
-            name = "SN" if u == 0 else "TT"
+            name = dataset.name
             print(f"  {name} (label {u}): {c} graphs ({pct:.2f}%)")
     else:
         print("No labels found.")

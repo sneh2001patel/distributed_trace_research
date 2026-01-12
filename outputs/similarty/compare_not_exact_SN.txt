@@ -1,0 +1,38 @@
+===============================================================================
+SUMMARY STATISTICS
+================================================================================
+Average Overall Similarity:  20.60%
+
+Most: (66.06% similar)
+Least: (13.03% similar)
+
+Reconstruction Quality:
+(≥80% similarity): 0/1244 (0.0%)
+ (50-80% similarity):    8/1244 (0.6%)
+ (<50% similarity):      1236/1244 (99.4%)
+
+================================================================================
+SUMMARY STATISTICS
+================================================================================
+Average Max Similarity Overall Similarity:  26.26%
+
+Most: (72.22% similar)
+Least: (18.30% similar)
+
+Reconstruction Quality:
+(≥80% similarity): 0/1244 (0.0%)
+ (50-80% similarity):    12/1244 (1.0%)
+ (<50% similarity):      1232/1244 (99.0%)
+
+================================================================================
+SUMMARY STATISTICS
+================================================================================
+Average Min Similarity Overall Similarity:  17.01%
+
+Most: (51.41% similar)
+Least: (10.56% similar)
+
+Reconstruction Quality:
+(≥80% similarity): 0/1244 (0.0%)
+ (50-80% similarity):    1/1244 (0.1%)
+ (<50% similarity):      1243/1244 (99.9%)

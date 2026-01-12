@@ -73,7 +73,7 @@ def main():
 
     # load ds
     real_path = "./processed/SN_data.pt"
-    synth_path = "./processed/not_exact_replica/SN_synthetic.pt"
+    synth_path = "./processed/exact_replica/prop_order_SN_synthetic.pt"
     real_ds = LoadDataset(real_path)
     synth_ds = LoadDataset(synth_path)
 
@@ -130,12 +130,8 @@ def main():
     best = max(similarities, key=lambda x: x["overall_similarity"])
     worst = min(similarities, key=lambda x: x["overall_similarity"])
 
-    print(
-        f"\nBest reconstruction:  Graph {best['index']} ({best['overall_similarity']:.2f}% similar)"
-    )
-    print(
-        f"Worst reconstruction: Graph {worst['index']} ({worst['overall_similarity']:.2f}% similar)"
-    )
+    print(f"\nMost:  Graph {best['index']} ({best['overall_similarity']:.2f}% similar)")
+    print(f"Least: Graph {worst['index']} ({worst['overall_similarity']:.2f}% similar)")
 
     # Count how many are "good" matches
     excellent = sum(1 for s in similarities if s["overall_similarity"] >= 80)
@@ -144,13 +140,13 @@ def main():
 
     print(f"\nReconstruction Quality:")
     print(
-        f"  Excellent (≥80% similarity): {excellent}/{len(similarities)} ({excellent/len(similarities)*100:.1f}%)"
+        f"  (≥80% similarity): {excellent}/{len(similarities)} ({excellent/len(similarities)*100:.1f}%)"
     )
     print(
-        f"  Good (50-80% similarity):    {good}/{len(similarities)} ({good/len(similarities)*100:.1f}%)"
+        f" (50-80% similarity):    {good}/{len(similarities)} ({good/len(similarities)*100:.1f}%)"
     )
     print(
-        f"  Poor (<50% similarity):      {poor}/{len(similarities)} ({poor/len(similarities)*100:.1f}%)"
+        f" (<50% similarity):      {poor}/{len(similarities)} ({poor/len(similarities)*100:.1f}%)"
     )
 
     print("\nDataset-level Distribution Similarity:")
