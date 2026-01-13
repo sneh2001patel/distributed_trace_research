@@ -76,22 +76,22 @@ run_training(
     edge_neg_weight=3.0,
     class_weight_max_ratio=10.0,
 )
-torch.save(
-    {
-        "encoder_state": enc.state_dict(),
-        "decoder_state": dec.state_dict(),
-        "config": {
-            "num_pods": dataset.num_pods,
-            "num_ops": dataset.num_ops,
-            "duration_mean": dataset.duration_mean,
-            "duration_std": dataset.duration_std,
-            "latent_dim": 64,
-            "hidden_dim": 128,
-            "embed_dim": 48,
-        },
-    },
-    "./weights/tt_vae_weights.pt",
-)
+# torch.save(
+#     {
+#         "encoder_state": enc.state_dict(),
+#         "decoder_state": dec.state_dict(),
+#         "config": {
+#             "num_pods": dataset.num_pods,
+#             "num_ops": dataset.num_ops,
+#             "duration_mean": dataset.duration_mean,
+#             "duration_std": dataset.duration_std,
+#             "latent_dim": 64,
+#             "hidden_dim": 128,
+#             "embed_dim": 48,
+#         },
+#     },
+#     "./weights/tt_vae_weights.pt",
+# )
 metrics = evaluate_reconstruction(dataset, enc, dec, device, edge_threshold=0.9)
 print(metrics)
 # In this example Pod and Service name mean the same thing

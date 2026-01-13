@@ -72,8 +72,8 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # load ds
-    real_path = "./processed/SN_data.pt"
-    synth_path = "./processed/exact_replica/prop_order_SN_synthetic.pt"
+    real_path = "./processed/TT_data.pt"
+    synth_path = "./processed/exact_replica/prop_order_TT_synthetic.pt"
     real_ds = LoadDataset(real_path)
     synth_ds = LoadDataset(synth_path)
 
