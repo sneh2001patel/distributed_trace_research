@@ -100,7 +100,7 @@ class TraceGraphDataset(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        return ["TT_data.pt"]
+        return ["other_ds/SN/SN_data3.pt"]
 
     def process(self):
         dfs = []
@@ -167,11 +167,10 @@ class TraceGraphDataset(InMemoryDataset):
 if __name__ == "__main__":
     dataset = TraceGraphDataset(
         base_dir="/home/snehpatel/research/parsed_output",
-        dataset_names=["TT_Dataset"],
+        dataset_names=["SN_Dataset"],
         trace_files={
-            "TT_Dataset": "TT.2022-04-21T153246D2022-04-21T174753_trace.csv",
+            "SN_Dataset": "SN.2022-04-17T192658D2022-04-17T195031_trace.csv",
         },
-        max_graphs=1244,  # Limit to 1244 graphs
+        max_graphs=5000,  # Limit to 1244 graphs
     )
     print(f"Built dataset with {len(dataset)} graphs")
-

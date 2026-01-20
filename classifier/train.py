@@ -225,6 +225,10 @@ def main():
         else:
             print(f"Epoch {epoch:03d} | train {train_loss:.4f}/{train_acc:.3f}")
 
+    final_weights_path = "./classifier_weights_final.pt"
+    torch.save(model.state_dict(), final_weights_path)
+    print(f"Saved final weights to {final_weights_path}")
+
     if val_loader and os.path.exists("./classifier_weights.pt"):
         model.load_state_dict(
             torch.load("./classifier_weights.pt", map_location=device)
