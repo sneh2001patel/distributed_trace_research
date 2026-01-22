@@ -24,8 +24,10 @@ def build_synthetic_dataset(
     y_label: int,
     target_count: int = None,
     edge_threshold: float = 0.9,
-    sample_edges: bool = False,
-    sample_nodes: bool = False,
+    sample_edges: bool = True,
+    sample_nodes: bool = True,
+    node_temperature: float = 1.0,
+    match_id_distribution: bool = False,
     edge_dropout: float = 0.0,
     duration_noise: float = 0.0,
     threshold_jitter: float = 0.0,
@@ -37,6 +39,18 @@ def build_synthetic_dataset(
     node_counts = [real_ds.get(i).num_nodes for i in range(len(real_ds))]
     target = target_count or len(node_counts)
     syn_graphs = []
+    joint_probs = None
+    n_sid = None
+    n_op = None
+    if match_id_distribution:
+        xs = torch.cat([real_ds.get(i).x for i in range(len(real_ds))], dim=0)
+        sid = xs[:, 0].round().long()
+        op = xs[:, 1].round().long()
+        n_sid = int(sid.max().item()) + 1
+        n_op = int(op.max().item()) + 1
+        joint = sid * n_op + op
+        counts = torch.bincount(joint, minlength=n_sid * n_op).float()
+        joint_probs = counts / counts.sum()
     # if target <= len(node_counts):
     #     sampled_counts = random.sample(node_counts, target)
     # else:
@@ -52,10 +66,18 @@ def build_synthetic_dataset(
             edge_threshold=edge_threshold,
             sample_edges=sample_edges,
             sample_nodes=sample_nodes,
+            node_temperature=node_temperature,
             edge_dropout=edge_dropout,
             duration_noise=duration_noise,
             threshold_jitter=threshold_jitter,
         )
+        if match_id_distribution:
+            probs = joint_probs.to(syn_graph.x.device)
+            joint_idx = torch.multinomial(probs, n_nodes, replacement=True)
+            sid = (joint_idx // n_op).float()
+            op = (joint_idx % n_op).float()
+            syn_graph.x[:, 0] = sid
+            syn_graph.x[:, 1] = op
         syn_graph.y = torch.tensor(y_label)
         syn_graphs.append(syn_graph)
 
@@ -89,6 +111,7 @@ def build_synthetic_dataset_wo_real_data(
     edge_threshold=0.9,
     sample_edges=False,
     sample_nodes=False,
+    node_temperature: float = 1.0,
     edge_dropout: float = 0.0,
     duration_noise: float = 0.0,
     threshold_jitter: float = 0.0,
@@ -109,6 +132,7 @@ def build_synthetic_dataset_wo_real_data(
             edge_threshold=edge_threshold,
             sample_edges=sample_edges,
             sample_nodes=sample_nodes,
+            node_temperature=node_temperature,
             edge_dropout=edge_dropout,
             duration_noise=duration_noise,
             threshold_jitter=threshold_jitter,
@@ -125,7 +149,9 @@ def build_synthetic_dataset_wo_real_data(
 def main():
     aug = {
         "sample_edges": True,
-        "sample_nodes": False,
+        "sample_nodes": True,
+        "node_temperature": 2.0,
+        "match_id_distribution": True,
         "edge_dropout": 0.1,
         "duration_noise": 0.05,
         "threshold_jitter": 0.05,
@@ -142,7 +168,7 @@ def main():
     build_synthetic_dataset(
         "./processed/TT_data.pt",
         "./weights/tt_vae_weights.pt",
-        "./processed/exact_replica/prop_order_TT_synthetic.pt",
+        "./processed/exact_replica/prop_order_TT_synthetic_sample_nodes.pt",
         y_label=1,
         target_count=None,
         edge_threshold=0.9,
@@ -152,7 +178,7 @@ def main():
     build_synthetic_dataset(
         "./processed/SN_data.pt",
         "./weights/sn_vae_weights.pt",
-        "./processed/exact_replica/prop_order_SN_synthetic.pt",
+        "./processed/exact_replica/prop_order_SN_synthetic_sample_nodes.pt",
         y_label=0,
         target_count=None,
         edge_threshold=0.9,

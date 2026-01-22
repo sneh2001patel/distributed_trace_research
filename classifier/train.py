@@ -146,30 +146,30 @@ def main():
     exact_dir = os.path.join(processed_dir, "exact_replica")
     not_exact_dir = os.path.join(processed_dir, "not_exact_replica")
 
-    syn_sn = os.path.join(exact_dir, "SN_synthetic.pt")
-    syn_tt = os.path.join(exact_dir, "TT_synthetic.pt")
-    if not os.path.exists(syn_sn) or not os.path.exists(syn_tt):
-        syn_sn = os.path.join(processed_dir, "SN_synthetic.pt")
-        syn_tt = os.path.join(processed_dir, "TT_synthetic.pt")
+    syn_sn = os.path.join(exact_dir, "prop_order_SN_synthetic_sample_nodes.pt")
+    syn_tt = os.path.join(exact_dir, "prop_order_TT_synthetic_sample_nodes.pt")
+    # if not os.path.exists(syn_sn) or not os.path.exists(syn_tt):
+    #     syn_sn = os.path.join(processed_dir, "SN_synthetic.pt")
+    #     syn_tt = os.path.join(processed_dir, "TT_synthetic.pt")
 
-    train_ds, val_ds, test_ds = prepare_mixed_dataset(
-        syn_sn_path=syn_sn,
-        syn_tt_path=syn_tt,
-        real_sn_path=os.path.join(processed_dir, "SN_data.pt"),
-        real_tt_path=os.path.join(processed_dir, "TT_data.pt"),
-        real_train_ratio=0.1,
-        val_ratio=0.2,
-        seed=42,
-    )
-
-    # train_ds, val_ds, test_ds = prepare_datasets(
+    # train_ds, val_ds, test_ds = prepare_mixed_dataset(
     #     syn_sn_path=syn_sn,
     #     syn_tt_path=syn_tt,
     #     real_sn_path=os.path.join(processed_dir, "SN_data.pt"),
     #     real_tt_path=os.path.join(processed_dir, "TT_data.pt"),
+    #     real_train_ratio=0.1,
     #     val_ratio=0.2,
     #     seed=42,
     # )
+
+    train_ds, val_ds, test_ds = prepare_datasets(
+        syn_sn_path=syn_sn,
+        syn_tt_path=syn_tt,
+        real_sn_path=os.path.join(processed_dir, "SN_data.pt"),
+        real_tt_path=os.path.join(processed_dir, "TT_data.pt"),
+        val_ratio=0.2,
+        seed=42,
+    )
 
     train_graphs = (
         train_ds.dataset.graphs if hasattr(train_ds, "dataset") else train_ds.graphs

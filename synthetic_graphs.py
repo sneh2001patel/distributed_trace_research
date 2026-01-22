@@ -40,6 +40,7 @@ def generate_synthetic_graph(
     edge_threshold: float = 0.9,
     sample_edges: bool = False,
     sample_nodes: bool = False,
+    node_temperature: float = 1.0,
     edge_dropout: float = 0.0,
     duration_noise: float = 0.0,
     threshold_jitter: float = 0.0,
@@ -53,8 +54,9 @@ def generate_synthetic_graph(
     )
 
     if sample_nodes:
-        pod_probs = torch.softmax(pod_logits, dim=1)
-        op_probs = torch.softmax(op_logits, dim=1)
+        temp = max(float(node_temperature), 1e-6)
+        pod_probs = torch.softmax(pod_logits / temp, dim=1)
+        op_probs = torch.softmax(op_logits / temp, dim=1)
         pod_ids = torch.multinomial(pod_probs, 1).squeeze(1)
         op_ids = torch.multinomial(op_probs, 1).squeeze(1)
     else:
@@ -134,4 +136,3 @@ def generate_synthetic_dataset(
             )
         )
     return graphs
-

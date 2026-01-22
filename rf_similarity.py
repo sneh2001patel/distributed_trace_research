@@ -24,9 +24,7 @@ class LoadDataset(InMemoryDataset):
         return super().get(idx)
 
 
-def preprocess_sid_op(
-    X_real: torch.Tensor, X_syn: torch.Tensor, n_sid: int, n_op: int
-):
+def preprocess_sid_op(X_real: torch.Tensor, X_syn: torch.Tensor, n_sid: int, n_op: int):
     X_all = torch.cat([X_real, X_syn], dim=0)
     sid = X_all[:, 0].round().long()
     op = X_all[:, 1].round().long()
@@ -85,7 +83,9 @@ def freq_drift_report(
         for idx in indices:
             sid = idx // n_op
             op = idx % n_op
-            rows.append((sid, op, joint_r_freq[idx], joint_s_freq[idx], joint_diff[idx]))
+            rows.append(
+                (sid, op, joint_r_freq[idx], joint_s_freq[idx], joint_diff[idx])
+            )
         return rows
 
     print("\nTop service_id frequency drifts (abs diff):")
@@ -119,18 +119,14 @@ syn_idx = np.arange(len(syn_graphs))
 real_train_idx, real_test_idx = train_test_split(
     real_idx, test_size=0.3, random_state=42
 )
-syn_train_idx, syn_test_idx = train_test_split(
-    syn_idx, test_size=0.3, random_state=42
-)
+syn_train_idx, syn_test_idx = train_test_split(syn_idx, test_size=0.3, random_state=42)
 
 Xr_train = torch.cat([real_graphs[i] for i in real_train_idx], dim=0)
 Xr_test = torch.cat([real_graphs[i] for i in real_test_idx], dim=0)
 Xs_train = torch.cat([syn_graphs[i] for i in syn_train_idx], dim=0)
 Xs_test = torch.cat([syn_graphs[i] for i in syn_test_idx], dim=0)
 
-X_all = torch.cat(
-    [torch.cat(real_graphs, dim=0), torch.cat(syn_graphs, dim=0)], dim=0
-)
+X_all = torch.cat([torch.cat(real_graphs, dim=0), torch.cat(syn_graphs, dim=0)], dim=0)
 n_sid = int(X_all[:, 0].round().long().max().item()) + 1
 n_op = int(X_all[:, 1].round().long().max().item()) + 1
 
