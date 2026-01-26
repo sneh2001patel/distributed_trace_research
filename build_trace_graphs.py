@@ -8,15 +8,6 @@ from torch_geometric.data import Data, InMemoryDataset
 from torch_geometric.data.data import DataEdgeAttr, DataTensorAttr
 
 
-def _load_first_csv(path: str) -> pd.DataFrame:
-    csv_files = sorted([f for f in os.listdir(path) if f.endswith(".csv")])
-    if not csv_files:
-        raise FileNotFoundError(f"No CSV files found in {path}")
-    df = pd.read_csv(os.path.join(path, csv_files[0]))
-    df.columns = [c.strip().lower() for c in df.columns]
-    return df
-
-
 def build_encoders(dfs: List[pd.DataFrame]) -> Tuple[dict, dict]:
     all_services = sorted({s for df in dfs for s in df["service_name"].astype(str)})
     all_ops = sorted({o for df in dfs for o in df["operation_name"].astype(str)})
@@ -84,6 +75,7 @@ class TraceGraphDataset(InMemoryDataset):
     def __init__(
         self,
         base_dir: str,
+        processed_path: str,
         dataset_names: List[str],
         trace_files: dict[str, str],
         max_graphs: int = 1244,
@@ -94,13 +86,22 @@ class TraceGraphDataset(InMemoryDataset):
         self.dataset_names = dataset_names
         self.trace_files = trace_files
         self.max_graphs = max_graphs
+
+        self._processed_path = os.path.abspath(processed_path)
+        self._processed_dir = os.path.dirname(self._processed_path)
+        self._processed_file = os.path.basename(self._processed_path)
+
         torch.serialization.add_safe_globals([Data, DataEdgeAttr, DataTensorAttr])
         super().__init__(".", transform, pre_transform)
         self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
 
     @property
     def processed_file_names(self):
-        return ["other_ds/SN/SN_data3.pt"]
+        return [self._processed_file]
+
+    @property
+    def processed_dir(self):
+        return self._processed_dir
 
     def process(self):
         dfs = []
@@ -161,12 +162,14 @@ class TraceGraphDataset(InMemoryDataset):
             raise RuntimeError("No graphs were built after processing trace files.")
 
         data, slices = self.collate(data_list)
+        os.makedirs(self._processed_dir, exist_ok=True)
         torch.save((data, slices), self.processed_paths[0])
 
 
 if __name__ == "__main__":
     dataset = TraceGraphDataset(
-        base_dir="/home/snehpatel/research/parsed_output",
+        base_dir="./parsed_output",
+        processed_path="./datasets/more_real_ds/SN/SN_data4.pt",
         dataset_names=["SN_Dataset"],
         trace_files={
             "SN_Dataset": "SN.2022-04-17T192658D2022-04-17T195031_trace.csv",

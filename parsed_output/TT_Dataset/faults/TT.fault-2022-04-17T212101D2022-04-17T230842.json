@@ -1,0 +1,69 @@
+{
+  "start": 1650172861,
+  "faults": [
+    {
+      "name": "ts-food-service",
+      "fault": "cpu_load",
+      "start": 1650172864,
+      "duration": 600,
+      "end": 1650173464
+    },
+    {
+      "name": "ts-food-service",
+      "fault": "network_delay",
+      "start": 1650173578,
+      "duration": 600,
+      "end": 1650174178
+    },
+    {
+      "name": "ts-food-service",
+      "fault": "network_loss",
+      "start": 1650174303,
+      "duration": 600,
+      "end": 1650174903
+    },
+    {
+      "name": "ts-travel-service",
+      "fault": "cpu_load",
+      "start": 1650175017,
+      "duration": 600,
+      "end": 1650175617
+    },
+    {
+      "name": "ts-travel-service",
+      "fault": "network_delay",
+      "start": 1650175732,
+      "duration": 600,
+      "end": 1650176332
+    },
+    {
+      "name": "ts-travel-service",
+      "fault": "network_loss",
+      "start": 1650176456,
+      "duration": 600,
+      "end": 1650177056
+    },
+    {
+      "name": "ts-contacts-service",
+      "fault": "cpu_load",
+      "start": 1650177172,
+      "duration": 600,
+      "end": 1650177772
+    },
+    {
+      "name": "ts-contacts-service",
+      "fault": "network_delay",
+      "start": 1650177886,
+      "duration": 600,
+      "end": 1650178486
+    },
+    {
+      "name": "ts-contacts-service",
+      "fault": "network_loss",
+      "start": 1650178610,
+      "duration": 600,
+      "end": 1650179210
+    }
+  ],
+  "end": 1650179322
+}

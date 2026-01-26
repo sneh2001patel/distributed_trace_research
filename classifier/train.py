@@ -3,21 +3,21 @@ import random
 
 import torch
 import torch.nn.functional as F
-from dataset import load_graphs, prepare_datasets, prepare_mixed_dataset
 from model import GraphClassifier
+from prepare_datasets import load_graphs, prepare_datasets, prepare_mixed_dataset
 from torch_geometric.loader import DataLoader
 
 
 def _max_ids(graphs):
-    pods = []
+    services = []
     ops = []
     for g in graphs:
         x = g.x
-        pods.append(x[:, 0])
+        services.append(x[:, 0])
         ops.append(x[:, 1])
-    pod_max = int(torch.cat(pods).max().item()) if pods else 0
+    service_max = int(torch.cat(services).max().item()) if services else 0
     op_max = int(torch.cat(ops).max().item()) if ops else 0
-    return pod_max + 1, op_max + 1
+    return service_max + 1, op_max + 1
 
 
 def _duration_stats(graphs):
@@ -106,34 +106,35 @@ def _per_class_prf(cm: torch.Tensor):
     return metrics
 
 
-def test():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    processed_dir = os.path.abspath(os.path.join(base_dir, "..", "processed"))
-    exact_dir = os.path.join(processed_dir, "exact_replica")
-    not_exact_dir = os.path.join(processed_dir, "exact_replica")
+# def test():
+#     base_dir = os.path.dirname(os.path.abspath(__file__))
+#     processed_dir = os.path.abspath(os.path.join(base_dir, "..", "processed"))
+#     exact_dir = os.path.join(processed_dir, "exact_replica")
+#     not_exact_dir = os.path.join(processed_dir, "exact_replica")
+#
+#     syn_sn = os.path.join(exact_dir, "SN_synthetic.pt")
+#     syn_tt = os.path.join(exact_dir, "TT_synthetic.pt")
+#     if not os.path.exists(syn_sn) or not os.path.exists(syn_tt):
+#         syn_sn = os.path.join(processed_dir, "SN_synthetic.pt")
+#         syn_tt = os.path.join(processed_dir, "TT_synthetic.pt")
+#
+#     train_ds, val_ds, test_ds = prepare_mixed_dataset(
+#         syn_sn_path=syn_sn,
+#         syn_tt_path=syn_tt,
+#         real_sn_path=os.path.join(processed_dir, "SN_data.pt"),
+#         real_tt_path=os.path.join(processed_dir, "TT_data.pt"),
+#         real_train_ratio=0.5,
+#         val_ratio=0.2,
+#         seed=42,
+#     )
+#
+#     print(
+#         f"Training Data: {len(train_ds)}, Validate Data: {len(val_ds)}, Testing Data: {len(test_ds)}"
+#     )
+#
 
-    syn_sn = os.path.join(exact_dir, "SN_synthetic.pt")
-    syn_tt = os.path.join(exact_dir, "TT_synthetic.pt")
-    if not os.path.exists(syn_sn) or not os.path.exists(syn_tt):
-        syn_sn = os.path.join(processed_dir, "SN_synthetic.pt")
-        syn_tt = os.path.join(processed_dir, "TT_synthetic.pt")
 
-    train_ds, val_ds, test_ds = prepare_mixed_dataset(
-        syn_sn_path=syn_sn,
-        syn_tt_path=syn_tt,
-        real_sn_path=os.path.join(processed_dir, "SN_data.pt"),
-        real_tt_path=os.path.join(processed_dir, "TT_data.pt"),
-        real_train_ratio=0.5,
-        val_ratio=0.2,
-        seed=42,
-    )
-
-    print(
-        f"Training Data: {len(train_ds)}, Validate Data: {len(val_ds)}, Testing Data: {len(test_ds)}"
-    )
-
-
-def main():
+def main(weights_path):
     seed = 42
     random.seed(seed)
     torch.manual_seed(seed)
@@ -142,34 +143,31 @@ def main():
     torch.backends.cudnn.benchmark = False
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    processed_dir = os.path.abspath(os.path.join(base_dir, "..", "processed"))
-    exact_dir = os.path.join(processed_dir, "exact_replica")
-    not_exact_dir = os.path.join(processed_dir, "not_exact_replica")
+    processed_dir = os.path.abspath(os.path.join(base_dir, "..", "datasets"))
+    fixed_size_dir = os.path.join(processed_dir, "fixed_size")
+    variable_size_dir = os.path.join(processed_dir, "variable_size")
 
-    syn_sn = os.path.join(exact_dir, "prop_order_SN_synthetic_sample_nodes.pt")
-    syn_tt = os.path.join(exact_dir, "prop_order_TT_synthetic_sample_nodes.pt")
-    # if not os.path.exists(syn_sn) or not os.path.exists(syn_tt):
-    #     syn_sn = os.path.join(processed_dir, "SN_synthetic.pt")
-    #     syn_tt = os.path.join(processed_dir, "TT_synthetic.pt")
+    syn_sn = os.path.join(variable_size_dir, "SN_synthetic.pt")
+    syn_tt = os.path.join(variable_size_dir, "TT_synthetic.pt")
 
-    # train_ds, val_ds, test_ds = prepare_mixed_dataset(
-    #     syn_sn_path=syn_sn,
-    #     syn_tt_path=syn_tt,
-    #     real_sn_path=os.path.join(processed_dir, "SN_data.pt"),
-    #     real_tt_path=os.path.join(processed_dir, "TT_data.pt"),
-    #     real_train_ratio=0.1,
-    #     val_ratio=0.2,
-    #     seed=42,
-    # )
-
-    train_ds, val_ds, test_ds = prepare_datasets(
+    train_ds, val_ds, test_ds = prepare_mixed_dataset(
         syn_sn_path=syn_sn,
         syn_tt_path=syn_tt,
         real_sn_path=os.path.join(processed_dir, "SN_data.pt"),
         real_tt_path=os.path.join(processed_dir, "TT_data.pt"),
+        real_train_ratio=0.1,
         val_ratio=0.2,
         seed=42,
     )
+
+    # train_ds, val_ds, test_ds = prepare_datasets(
+    #     syn_sn_path=syn_sn,
+    #     syn_tt_path=syn_tt,
+    #     real_sn_path=os.path.join(processed_dir, "SN_data.pt"),
+    #     real_tt_path=os.path.join(processed_dir, "TT_data.pt"),
+    #     val_ratio=0.2,
+    #     seed=42,
+    # )
 
     train_graphs = (
         train_ds.dataset.graphs if hasattr(train_ds, "dataset") else train_ds.graphs
@@ -178,11 +176,11 @@ def main():
     real_tt_graphs = load_graphs(os.path.join(processed_dir, "TT_data.pt"))
     real_graphs = real_sn_graphs + real_tt_graphs
 
-    n_pods, n_ops = _max_ids(real_graphs)
+    n_services, n_ops = _max_ids(real_graphs)
     dur_mean, dur_std = _duration_stats(train_graphs + real_graphs)
 
     model = GraphClassifier(
-        n_pods=n_pods,
+        n_services=n_services,
         n_ops=n_ops,
         num_classes=2,
         embed_dim=48,
@@ -225,14 +223,14 @@ def main():
         else:
             print(f"Epoch {epoch:03d} | train {train_loss:.4f}/{train_acc:.3f}")
 
-    final_weights_path = "./classifier_weights_final.pt"
-    torch.save(model.state_dict(), final_weights_path)
-    print(f"Saved final weights to {final_weights_path}")
+    # final_weights_path = "./classifier_weights_final.pt"
+    torch.save(model.state_dict(), weights_path)
+    print(f"Saved final weights to {weights_path}")
 
-    if val_loader and os.path.exists("./classifier_weights.pt"):
-        model.load_state_dict(
-            torch.load("./classifier_weights.pt", map_location=device)
-        )
+    # if val_loader and os.path.exists("./classifier_weights.pt"):
+    #     model.load_state_dict(
+    #         torch.load("./classifier_weights.pt", map_location=device)
+    # )
 
     test_loss, test_acc = _run_epoch(model, test_loader, device)
     print(f"Test {test_loss:.4f}/{test_acc:.3f}")
@@ -250,5 +248,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-    # test()
+    main("./classifier_weights.pt")

@@ -15,7 +15,7 @@ def _log_normalize_duration(raw_duration: torch.Tensor, mean, std) -> torch.Tens
 class GraphClassifier(nn.Module):
     def __init__(
         self,
-        n_pods: int,
+        n_services: int,
         n_ops: int,
         num_classes: int = 2,
         embed_dim: int = 48,
@@ -26,7 +26,7 @@ class GraphClassifier(nn.Module):
         duration_std: float = None,
     ):
         super().__init__()
-        self.pod_embeddings = nn.Embedding(n_pods, embed_dim)
+        self.service_embeddings = nn.Embedding(n_services, embed_dim)
         self.op_embeddings = nn.Embedding(n_ops, embed_dim)
         self.duration_encoder = nn.Sequential(
             nn.Linear(1, embed_dim),
@@ -59,7 +59,9 @@ class GraphClassifier(nn.Module):
             self.duration_std = None
 
     def _build_feats(self, x: torch.Tensor) -> torch.Tensor:
-        pod_ids = x[:, 0].long().clamp(min=0, max=self.pod_embeddings.num_embeddings - 1)
+        service_ids = (
+            x[:, 0].long().clamp(min=0, max=self.service_embeddings.num_embeddings - 1)
+        )
         op_ids = x[:, 1].long().clamp(min=0, max=self.op_embeddings.num_embeddings - 1)
         duration = _log_normalize_duration(
             x[:, 2],
@@ -67,10 +69,10 @@ class GraphClassifier(nn.Module):
             self.duration_std,
         ).unsqueeze(-1)
 
-        pod_feat = self.pod_embeddings(pod_ids)
+        service_feat = self.service_embeddings(service_ids)
         op_feat = self.op_embeddings(op_ids)
         duration_feat = self.duration_encoder(duration)
-        return torch.cat([pod_feat, op_feat, duration_feat], dim=1)
+        return torch.cat([service_feat, op_feat, duration_feat], dim=1)
 
     def forward(self, data):
         x = data.x
