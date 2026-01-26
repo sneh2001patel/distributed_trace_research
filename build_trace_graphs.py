@@ -110,7 +110,6 @@ class TraceGraphDataset(InMemoryDataset):
             if not os.path.isdir(trace_dir):
                 print(f"⚠️ Traces directory not found: {trace_dir}, skipping.")
                 continue
-
             if name not in self.trace_files:
                 print(f"⚠️ No trace file specified for dataset {name}, skipping.")
                 continue
