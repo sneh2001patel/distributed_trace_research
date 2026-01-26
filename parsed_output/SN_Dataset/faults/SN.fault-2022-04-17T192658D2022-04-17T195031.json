@@ -1,0 +1,69 @@
+{
+  "start": 1650166018,
+  "faults": [
+    {
+      "name": "compose-post-service",
+      "fault": "cpu_load",
+      "start": 1650166021,
+      "duration": 120,
+      "end": 1650166141
+    },
+    {
+      "name": "compose-post-service",
+      "fault": "network_delay",
+      "start": 1650166174,
+      "duration": 120,
+      "end": 1650166294
+    },
+    {
+      "name": "compose-post-service",
+      "fault": "network_loss",
+      "start": 1650166337,
+      "duration": 120,
+      "end": 1650166457
+    },
+    {
+      "name": "user-timeline-service",
+      "fault": "cpu_load",
+      "start": 1650166492,
+      "duration": 120,
+      "end": 1650166612
+    },
+    {
+      "name": "user-timeline-service",
+      "fault": "network_delay",
+      "start": 1650166645,
+      "duration": 120,
+      "end": 1650166765
+    },
+    {
+      "name": "user-timeline-service",
+      "fault": "network_loss",
+      "start": 1650166808,
+      "duration": 120,
+      "end": 1650166928
+    },
+    {
+      "name": "user-mention-service",
+      "fault": "cpu_load",
+      "start": 1650166963,
+      "duration": 120,
+      "end": 1650167083
+    },
+    {
+      "name": "user-mention-service",
+      "fault": "network_delay",
+      "start": 1650167116,
+      "duration": 120,
+      "end": 1650167236
+    },
+    {
+      "name": "user-mention-service",
+      "fault": "network_loss",
+      "start": 1650167279,
+      "duration": 120,
+      "end": 1650167399
+    }
+  ],
+  "end": 1650167431
+}

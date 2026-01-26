@@ -1,0 +1,69 @@
+{
+  "start": 1650226515,
+  "faults": [
+    {
+      "name": "ts-route-plan-service",
+      "fault": "cpu_load",
+      "start": 1650226518,
+      "duration": 600,
+      "end": 1650227118
+    },
+    {
+      "name": "ts-route-plan-service",
+      "fault": "network_delay",
+      "start": 1650227232,
+      "duration": 600,
+      "end": 1650227832
+    },
+    {
+      "name": "ts-route-plan-service",
+      "fault": "network_loss",
+      "start": 1650227956,
+      "duration": 600,
+      "end": 1650228556
+    },
+    {
+      "name": "ts-assurance-service",
+      "fault": "cpu_load",
+      "start": 1650228671,
+      "duration": 600,
+      "end": 1650229271
+    },
+    {
+      "name": "ts-assurance-service",
+      "fault": "network_delay",
+      "start": 1650229386,
+      "duration": 600,
+      "end": 1650229986
+    },
+    {
+      "name": "ts-assurance-service",
+      "fault": "network_loss",
+      "start": 1650230110,
+      "duration": 600,
+      "end": 1650230710
+    },
+    {
+      "name": "ts-price-service",
+      "fault": "cpu_load",
+      "start": 1650230825,
+      "duration": 600,
+      "end": 1650231425
+    },
+    {
+      "name": "ts-price-service",
+      "fault": "network_delay",
+      "start": 1650231539,
+      "duration": 600,
+      "end": 1650232139
+    },
+    {
+      "name": "ts-price-service",
+      "fault": "network_loss",
+      "start": 1650232264,
+      "duration": 600,
+      "end": 1650232864
+    }
+  ],
+  "end": 1650232976
+}

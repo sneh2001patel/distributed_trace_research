@@ -1,0 +1,69 @@
+{
+  "start": 1650236849,
+  "faults": [
+    {
+      "name": "ts-train-service",
+      "fault": "cpu_load",
+      "start": 1650236852,
+      "duration": 600,
+      "end": 1650237452
+    },
+    {
+      "name": "ts-train-service",
+      "fault": "network_delay",
+      "start": 1650237566,
+      "duration": 600,
+      "end": 1650238166
+    },
+    {
+      "name": "ts-train-service",
+      "fault": "network_loss",
+      "start": 1650238290,
+      "duration": 600,
+      "end": 1650238890
+    },
+    {
+      "name": "ts-order-service",
+      "fault": "cpu_load",
+      "start": 1650239005,
+      "duration": 600,
+      "end": 1650239605
+    },
+    {
+      "name": "ts-order-service",
+      "fault": "network_delay",
+      "start": 1650239719,
+      "duration": 600,
+      "end": 1650240319
+    },
+    {
+      "name": "ts-order-service",
+      "fault": "network_loss",
+      "start": 1650240444,
+      "duration": 600,
+      "end": 1650241044
+    },
+    {
+      "name": "ts-cancel-service",
+      "fault": "cpu_load",
+      "start": 1650241160,
+      "duration": 600,
+      "end": 1650241760
+    },
+    {
+      "name": "ts-cancel-service",
+      "fault": "network_delay",
+      "start": 1650241874,
+      "duration": 600,
+      "end": 1650242474
+    },
+    {
+      "name": "ts-cancel-service",
+      "fault": "network_loss",
+      "start": 1650242598,
+      "duration": 600,
+      "end": 1650243198
+    }
+  ],
+  "end": 1650243311
+}

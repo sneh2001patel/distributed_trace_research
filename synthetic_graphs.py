@@ -5,7 +5,7 @@ import torch
 from torch_geometric.data import Data
 from torch_geometric.utils import to_undirected
 
-from vae_backup import GNNDecoder, _log_denormalize_duration
+from vae import GNNDecoder, _log_denormalize_duration
 
 
 def load_decoder(weights_path: str, device: torch.device):
@@ -14,7 +14,7 @@ def load_decoder(weights_path: str, device: torch.device):
     dec = GNNDecoder(
         latent_dim=cfg["latent_dim"],
         hidden_dim=cfg["hidden_dim"],
-        n_pod_classes=cfg["num_pods"],
+        n_service_classes=cfg["num_services"],
         n_op_classes=cfg["num_ops"],
         encoder_hidden_dim=cfg.get("encoder_hidden_dim", cfg["hidden_dim"]),
         max_nodes=cfg.get("max_nodes", 256),
@@ -24,10 +24,6 @@ def load_decoder(weights_path: str, device: torch.device):
     dec.load_state_dict(checkpoint["decoder_state"])
     dec.eval()
     return dec, cfg
-
-
-def load_tt_decoder(weights_path: str, device: torch.device):
-    return load_decoder(weights_path, device)
 
 
 @torch.no_grad()
@@ -49,18 +45,18 @@ def generate_synthetic_graph(
     z_n = torch.randn(num_nodes, decoder.latent_dim, device=device)
     enc_h = torch.zeros(num_nodes, decoder.encoder_hidden_dim, device=device)
 
-    pod_logits, op_logits, duration_pred, edge_logits = decoder.decode_for_training(
+    service_logits, op_logits, duration_pred, edge_logits = decoder.decode_for_training(
         z_g, z_n, enc_h
     )
 
     if sample_nodes:
         temp = max(float(node_temperature), 1e-6)
-        pod_probs = torch.softmax(pod_logits / temp, dim=1)
+        service_probs = torch.softmax(service_logits / temp, dim=1)
         op_probs = torch.softmax(op_logits / temp, dim=1)
-        pod_ids = torch.multinomial(pod_probs, 1).squeeze(1)
+        service_ids = torch.multinomial(service_probs, 1).squeeze(1)
         op_ids = torch.multinomial(op_probs, 1).squeeze(1)
     else:
-        pod_ids = pod_logits.argmax(dim=1)
+        service_ids = service_logits.argmax(dim=1)
         op_ids = op_logits.argmax(dim=1)
 
     duration = _log_denormalize_duration(
@@ -96,14 +92,14 @@ def generate_synthetic_graph(
     edge_index = edge_keep.nonzero(as_tuple=False).t().contiguous()
     edge_index = to_undirected(edge_index, num_nodes=num_nodes)
 
-    x = torch.stack([pod_ids, op_ids, duration], dim=1).float()
+    x = torch.stack([service_ids, op_ids, duration], dim=1).float()
     return Data(x=x, edge_index=edge_index)
 
 
 def generate_synthetic_dataset(
     num_graphs: int,
     num_nodes: Tuple[int, int],
-    weights_path: str = "./processed/tt_vae_weights.pt",
+    weights_path: str = "./weights/tt_vae_weights.pt",
     device: torch.device = None,
     edge_threshold: float = 0.9,
     sample_edges: bool = False,
@@ -113,7 +109,7 @@ def generate_synthetic_dataset(
     threshold_jitter: float = 0.0,
 ) -> List[Data]:
     device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    decoder, cfg = load_tt_decoder(weights_path, device)
+    decoder, cfg = load_decoder(weights_path, device)
     graphs: List[Data] = []
     for _ in range(num_graphs):
         if isinstance(num_nodes, tuple):

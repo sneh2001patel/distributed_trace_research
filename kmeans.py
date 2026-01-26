@@ -33,15 +33,6 @@ class LoadDataset(InMemoryDataset):
         return super().get(idx)
 
 
-real = LoadDataset(datapath="./processed/SN_data.pt")
-synthetic = LoadDataset(datapath="./processed/exact_replica/prop_order_SN_synthetic.pt")
-
-print(f"Real dataset: {real}")
-print(f"Synthetic dataset: {synthetic}")
-print(f"Num graphs real: {len(real)}")
-print(f"Num graphs syn: {len(synthetic)}")
-
-
 def extract_nodes(ds: InMemoryDataset):
     xs = []
 
@@ -54,12 +45,6 @@ def extract_nodes(ds: InMemoryDataset):
         xs.append(graph.x.detach().cpu())
 
     return torch.cat(xs, dim=0)
-
-
-Xr = extract_nodes(real).float()
-Xs = extract_nodes(synthetic).float()
-
-print(Xr.shape, Xs.shape)
 
 
 def preprocess_sid_op_duration(X_real: torch.Tensor, X_syn: torch.Tensor):
@@ -92,6 +77,18 @@ def preprocess_sid_op_duration(X_real: torch.Tensor, X_syn: torch.Tensor):
     return X_feat, origin
 
 
+real = LoadDataset(datapath="./datasets/SN_data.pt")
+synthetic = LoadDataset(datapath="./datasets/fixed_size/SN_synthetic.pt")
+
+print(f"Real dataset: {real}")
+print(f"Synthetic dataset: {synthetic}")
+print(f"Num graphs real: {len(real)}")
+print(f"Num graphs syn: {len(synthetic)}")
+
+Xr = extract_nodes(real).float()
+Xs = extract_nodes(synthetic).float()
+
+print(Xr.shape, Xs.shape)
 X_feat, origin = preprocess_sid_op_duration(Xr, Xs)
 
 X_feat = StandardScaler().fit_transform(X_feat)
@@ -118,15 +115,15 @@ print("\nNMI(origin vs cluster):", float(nmi), " (0=mixed, higher=separable)")
 pca = PCA(n_components=2, random_state=42)
 Xp = pca.fit_transform(X_feat)
 
-plt.figure(figsize=(7, 6))
-plt.scatter(Xp[origin == 0, 0], Xp[origin == 0, 1], s=6, alpha=0.5, label="Real nodes")
-plt.scatter(
-    Xp[origin == 1, 0], Xp[origin == 1, 1], s=6, alpha=0.5, label="Synthetic nodes"
-)
-plt.title("PCA of Node Features (sid/op/duration): Real vs Synthetic")
-plt.xlabel("PC1")
-plt.ylabel("PC2")
-plt.legend()
-plt.tight_layout()
-plt.savefig("kmeans_SN_dataset.png", dpi=300, bbox_inches="tight")
-plt.close()
+# plt.figure(figsize=(7, 6))
+# plt.scatter(Xp[origin == 0, 0], Xp[origin == 0, 1], s=6, alpha=0.5, label="Real nodes")
+# plt.scatter(
+#     Xp[origin == 1, 0], Xp[origin == 1, 1], s=6, alpha=0.5, label="Synthetic nodes"
+# )
+# plt.title("PCA of Node Features (sid/op/duration): Real vs Synthetic")
+# plt.xlabel("PC1")
+# plt.ylabel("PC2")
+# plt.legend()
+# plt.tight_layout()
+# plt.savefig("kmeans_SN_dataset.png", dpi=300, bbox_inches="tight")
+# plt.close()

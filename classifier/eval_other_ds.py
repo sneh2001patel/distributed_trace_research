@@ -7,15 +7,15 @@ from torch_geometric.loader import DataLoader
 
 
 def _max_ids(graphs):
-    pods = []
+    services = []
     ops = []
     for g in graphs:
         x = g.x
-        pods.append(x[:, 0])
+        services.append(x[:, 0])
         ops.append(x[:, 1])
-    pod_max = int(torch.cat(pods).max().item()) if pods else 0
+    service_max = int(torch.cat(services).max().item()) if services else 0
     op_max = int(torch.cat(ops).max().item()) if ops else 0
-    return pod_max + 1, op_max + 1
+    return service_max + 1, op_max + 1
 
 
 def _duration_stats(graphs):
@@ -54,9 +54,9 @@ def _load_training_stats(processed_dir):
     real_tt_graphs = load_graphs(os.path.join(processed_dir, "TT_data.pt"))
     real_graphs = real_sn_graphs + real_tt_graphs
 
-    n_pods, n_ops = _max_ids(real_graphs)
+    n_services, n_ops = _max_ids(real_graphs)
     dur_mean, dur_std = _duration_stats(train_graphs + real_graphs)
-    return n_pods, n_ops, dur_mean, dur_std
+    return n_services, n_ops, dur_mean, dur_std
 
 
 @torch.no_grad()
@@ -85,10 +85,10 @@ def main():
     if not os.path.exists(weights_path):
         raise FileNotFoundError(f"Missing weights at {weights_path}")
 
-    n_pods, n_ops, dur_mean, dur_std = _load_training_stats(processed_dir)
+    n_services, n_ops, dur_mean, dur_std = _load_training_stats(processed_dir)
 
     model = GraphClassifier(
-        n_pods=n_pods,
+        n_services=n_services,
         n_ops=n_ops,
         num_classes=2,
         embed_dim=48,
