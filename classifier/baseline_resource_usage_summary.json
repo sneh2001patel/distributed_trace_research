@@ -1,0 +1,15 @@
+{
+  "command": "python run_baseline_comparison.py",
+  "return_code": -2,
+  "wall_seconds": 358.680728,
+  "process_tree_cpu_seconds": 215.07,
+  "process_tree_avg_cpu_pct": 59.961404,
+  "process_tree_peak_rss_mb": 1956.421875,
+  "process_tree_peak_vms_mb": 12809.382812,
+  "gpu_peak_mem_used_total_mb": 820.0,
+  "process_tree_gpu_peak_mem_mb": 270.0,
+  "gpu_peak_util_pct": 56.0,
+  "sample_interval_seconds": 2.0,
+  "samples": 176,
+  "timeseries_csv": "/home/snehpatel/research/generate_graphs/classifier/baseline_resource_usage_timeseries.csv"
+}

@@ -45,6 +45,7 @@ def load_decoder_from_checkpoint(weights_path: str, device: torch.device):
         max_nodes=max_nodes,
         head_hidden_dim=head_hidden_dim,
         head_dropout=cfg.get("head_dropout", 0.1),
+        enc_h_dropout=cfg.get("enc_h_dropout", 0.0),
     ).to(device)
     dec.load_state_dict(state)
     dec.eval()
@@ -63,6 +64,27 @@ def sample_node_counts(graphs, target_count: int = None, seed: int = 42):
     if target <= len(counts):
         return rng.sample(counts, target)
     return [rng.choice(counts) for _ in range(target)]
+
+
+def sample_edge_counts(graphs, target_count: int = None, seed: int = 42):
+    counts = [int(g.edge_index.size(1)) for g in graphs]
+    target = target_count or len(counts)
+    rng = random.Random(seed + 17)
+    if target <= len(counts):
+        return rng.sample(counts, target)
+    return [rng.choice(counts) for _ in range(target)]
+
+
+def build_valid_ops_by_service(graphs):
+    valid = {}
+    for graph in graphs:
+        x = graph.x.detach().cpu()
+        for service_id, op_id in zip(x[:, 0].round().long(), x[:, 1].round().long()):
+            valid.setdefault(int(service_id.item()), set()).add(int(op_id.item()))
+    return {
+        service_id: torch.tensor(sorted(op_ids), dtype=torch.long)
+        for service_id, op_ids in valid.items()
+    }
 
 
 def save_graphs(graphs, out_path: str):
@@ -93,9 +115,11 @@ def build_dataset(
 
     real_graphs = load_graphs(real_path)
     node_counts = sample_node_counts(real_graphs, target_count=target_count, seed=seed)
+    edge_counts = sample_edge_counts(real_graphs, target_count=len(node_counts), seed=seed)
+    valid_ops_by_service = build_valid_ops_by_service(real_graphs)
 
     syn_graphs = []
-    for n_nodes in node_counts:
+    for n_nodes, target_edges in zip(node_counts, edge_counts):
         graph = generate_synthetic_graph(
             decoder,
             num_nodes=n_nodes,
@@ -109,6 +133,8 @@ def build_dataset(
             edge_dropout=edge_dropout,
             duration_noise=duration_noise,
             threshold_jitter=threshold_jitter,
+            target_edge_count=target_edges,
+            valid_ops_by_service=valid_ops_by_service,
         )
         graph.y = torch.tensor(y_label, dtype=torch.long)
         syn_graphs.append(graph.cpu())

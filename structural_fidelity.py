@@ -22,6 +22,10 @@ DATASETS = {
             "abnormal": "./datasets/anomaly/TT/TT_abnormal.pt",
         },
         "synthetic": {
+            "random_sampling": {
+                "normal": "./datasets/baselines/TT_normal_random_sampling.pt",
+                "abnormal": "./datasets/baselines/TT_abnormal_random_sampling.pt",
+            },
             "empirical": {
                 "normal": "./datasets/baselines/TT_normal_empirical_random_tree.pt",
                 "abnormal": "./datasets/baselines/TT_abnormal_empirical_random_tree.pt",
@@ -43,6 +47,10 @@ DATASETS = {
             "abnormal": "./datasets/anomaly/SN/SN_abnormal.pt",
         },
         "synthetic": {
+            "random_sampling": {
+                "normal": "./datasets/baselines/SN_normal_random_sampling.pt",
+                "abnormal": "./datasets/baselines/SN_abnormal_random_sampling.pt",
+            },
             "empirical": {
                 "normal": "./datasets/baselines/SN_normal_empirical_random_tree.pt",
                 "abnormal": "./datasets/baselines/SN_abnormal_empirical_random_tree.pt",
@@ -378,7 +386,7 @@ def write_markdown(rows: List[Dict[str, float]], out_path: Path):
         sep = "|---" + "|---:" * (len(fields) - 1) + "|"
         lines.extend([header, sep])
         sys_rows = [r for r in rows if r["system"] == system]
-        order = {"empirical": 0, "flat_vae": 1, "hierarchical_vae": 2}
+        order = {"random_sampling": 0, "empirical": 1, "flat_vae": 2, "hierarchical_vae": 3}
         cls_order = {"normal": 0, "abnormal": 1, "combined": 2}
         sys_rows.sort(key=lambda r: (order.get(r["generator"], 9), cls_order.get(r["trace_class"], 9)))
         for row in sys_rows:
@@ -394,8 +402,8 @@ def main():
     parser.add_argument(
         "--generators",
         nargs="+",
-        choices=["empirical", "flat_vae", "hierarchical_vae"],
-        default=["empirical", "flat_vae", "hierarchical_vae"],
+        choices=["random_sampling", "empirical", "flat_vae", "hierarchical_vae"],
+        default=["random_sampling", "empirical", "flat_vae", "hierarchical_vae"],
     )
     parser.add_argument("--max-graphs", type=int, default=1000)
     parser.add_argument("--seed", type=int, default=42)

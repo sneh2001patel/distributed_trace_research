@@ -184,6 +184,7 @@ def prepare_sn_anomaly_datasets(
         real_test_abnormal, real_test_fraction, seed=seed
     )
 
+    target_real_total = None
     if real_percent is not None:
         if not 0.0 <= real_percent <= 100.0:
             raise ValueError("real_percent must be between 0 and 100")
@@ -229,10 +230,12 @@ def prepare_sn_anomaly_datasets(
         + real_train_normal
         + real_train_abnormal
     )
-    if real_percent is not None:
+    if real_percent is not None and target_real_total and target_real_total > 0:
         val_graphs = real_val_normal + real_val_abnormal
+        val_source = "real"
     else:
         val_graphs = syn_val_normal + syn_val_abnormal
+        val_source = "synthetic"
     val_ds = GraphDataset(val_graphs)
     test_ds = GraphDataset(real_test_normal + real_test_abnormal)
 
@@ -249,6 +252,7 @@ def prepare_sn_anomaly_datasets(
         "test_abnormal_real": len(real_test_abnormal),
         "train_real_total": len(real_train_normal) + len(real_train_abnormal),
         "train_synth_total": len(syn_train_normal) + len(syn_train_abnormal),
+        "val_source": val_source,
     }
     return train_ds, val_ds, test_ds, summary
 

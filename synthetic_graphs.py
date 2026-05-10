@@ -20,6 +20,7 @@ def load_decoder(weights_path: str, device: torch.device):
         max_nodes=cfg.get("max_nodes", 256),
         head_hidden_dim=cfg.get("head_hidden_dim", cfg["hidden_dim"] * 2),
         head_dropout=cfg.get("head_dropout", 0.3),
+        enc_h_dropout=cfg.get("enc_h_dropout", 0.0),
     ).to(device)
     dec.load_state_dict(checkpoint["decoder_state"])
     dec.eval()
@@ -40,6 +41,8 @@ def generate_synthetic_graph(
     edge_dropout: float = 0.0,
     duration_noise: float = 0.0,
     threshold_jitter: float = 0.0,
+    target_edge_count: int = None,
+    valid_ops_by_service: dict[int, torch.Tensor] = None,
 ) -> Data:
     z_g = torch.randn(decoder.latent_dim, device=device)
     z_n = torch.randn(num_nodes, decoder.latent_dim, device=device)
@@ -52,11 +55,25 @@ def generate_synthetic_graph(
     if sample_nodes:
         temp = max(float(node_temperature), 1e-6)
         service_probs = torch.softmax(service_logits / temp, dim=1)
-        op_probs = torch.softmax(op_logits / temp, dim=1)
         service_ids = torch.multinomial(service_probs, 1).squeeze(1)
-        op_ids = torch.multinomial(op_probs, 1).squeeze(1)
     else:
         service_ids = service_logits.argmax(dim=1)
+
+    if valid_ops_by_service:
+        op_logits = op_logits.clone()
+        for i, service_id in enumerate(service_ids.tolist()):
+            valid_ops = valid_ops_by_service.get(int(service_id))
+            if valid_ops is None or valid_ops.numel() == 0:
+                continue
+            mask = torch.ones(op_logits.size(1), device=device, dtype=torch.bool)
+            mask[valid_ops.to(device).long()] = False
+            op_logits[i, mask] = -1e9
+
+    if sample_nodes:
+        temp = max(float(node_temperature), 1e-6)
+        op_probs = torch.softmax(op_logits / temp, dim=1)
+        op_ids = torch.multinomial(op_probs, 1).squeeze(1)
+    else:
         op_ids = op_logits.argmax(dim=1)
 
     duration = _log_denormalize_duration(
@@ -82,7 +99,17 @@ def generate_synthetic_graph(
     mask = torch.triu(
         torch.ones(num_nodes, num_nodes, device=device), diagonal=1
     ).bool()
-    if sample_edges:
+    if target_edge_count is not None:
+        target_edge_count = max(0, int(target_edge_count))
+        n_select = min(int((target_edge_count + 1) // 2), int(mask.sum().item()))
+        edge_keep = torch.zeros_like(mask)
+        if n_select > 0:
+            scores = edge_probs.masked_fill(~mask, -1.0)
+            flat_idx = torch.topk(scores.flatten(), k=n_select).indices
+            edge_keep = edge_keep.flatten()
+            edge_keep[flat_idx] = True
+            edge_keep = edge_keep.view_as(mask)
+    elif sample_edges:
         edge_keep = (torch.rand_like(edge_probs) < edge_probs) & mask
     else:
         edge_keep = (edge_probs > edge_threshold) & mask

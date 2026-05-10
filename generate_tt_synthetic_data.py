@@ -48,6 +48,7 @@ def load_decoder_from_checkpoint(weights_path: str, device: torch.device):
         max_nodes=max_nodes,
         head_hidden_dim=head_hidden_dim,
         head_dropout=cfg.get("head_dropout", 0.05),
+        enc_h_dropout=cfg.get("enc_h_dropout", 0.0),
     ).to(device)
     dec.load_state_dict(state)
     dec.eval()
@@ -65,6 +66,27 @@ def sample_node_counts(graphs, target_count: int = None, seed: int = 42):
     if target <= len(counts):
         return rng.sample(counts, target)
     return [rng.choice(counts) for _ in range(target)]
+
+
+def sample_edge_counts(graphs, target_count: int = None, seed: int = 42):
+    counts = [int(g.edge_index.size(1)) for g in graphs]
+    target = target_count or len(counts)
+    rng = random.Random(seed + 17)
+    if target <= len(counts):
+        return rng.sample(counts, target)
+    return [rng.choice(counts) for _ in range(target)]
+
+
+def build_valid_ops_by_service(graphs):
+    valid = {}
+    for graph in graphs:
+        x = graph.x.detach().cpu()
+        for service_id, op_id in zip(x[:, 0].round().long(), x[:, 1].round().long()):
+            valid.setdefault(int(service_id.item()), set()).add(int(op_id.item()))
+    return {
+        service_id: torch.tensor(sorted(op_ids), dtype=torch.long)
+        for service_id, op_ids in valid.items()
+    }
 
 
 def save_graphs(graphs, out_path: str):
@@ -85,6 +107,8 @@ def generate_tt_synthetic_graph(
     node_temperature: float = 1.1,
     parent_temperature: float = 1.0,
     duration_noise: float = 0.02,
+    target_edge_count: int = None,
+    valid_ops_by_service: dict[int, torch.Tensor] = None,
 ) -> Data:
     z_g = torch.randn(decoder.latent_dim, device=device)
     z_n = torch.randn(num_nodes, decoder.latent_dim, device=device)
@@ -97,11 +121,25 @@ def generate_tt_synthetic_graph(
     if sample_nodes:
         temp = max(float(node_temperature), 1e-6)
         service_probs = torch.softmax(service_logits / temp, dim=1)
-        op_probs = torch.softmax(op_logits / temp, dim=1)
         service_ids = torch.multinomial(service_probs, 1).squeeze(1)
-        op_ids = torch.multinomial(op_probs, 1).squeeze(1)
     else:
         service_ids = service_logits.argmax(dim=1)
+
+    if valid_ops_by_service:
+        op_logits = op_logits.clone()
+        for i, service_id in enumerate(service_ids.tolist()):
+            valid_ops = valid_ops_by_service.get(int(service_id))
+            if valid_ops is None or valid_ops.numel() == 0:
+                continue
+            mask = torch.ones(op_logits.size(1), device=device, dtype=torch.bool)
+            mask[valid_ops.to(device).long()] = False
+            op_logits[i, mask] = -1e9
+
+    if sample_nodes:
+        temp = max(float(node_temperature), 1e-6)
+        op_probs = torch.softmax(op_logits / temp, dim=1)
+        op_ids = torch.multinomial(op_probs, 1).squeeze(1)
+    else:
         op_ids = op_logits.argmax(dim=1)
 
     duration = _log_denormalize_duration(
@@ -114,17 +152,31 @@ def generate_tt_synthetic_graph(
             duration + torch.randn_like(duration) * duration_noise, min=0.0
         )
 
-    parent_temp = max(float(parent_temperature), 1e-6)
-    parent_probs = torch.softmax(parent_logits / parent_temp, dim=1)
-    if sample_nodes:
-        parent_ids = torch.multinomial(parent_probs, 1).squeeze(1)
-    else:
-        parent_ids = parent_logits.argmax(dim=1)
-
     edges = []
-    for child, parent in enumerate(parent_ids.tolist()):
-        if parent < num_nodes:
-            edges.append([parent, child])
+    if target_edge_count is not None:
+        target_edge_count = min(max(0, int(target_edge_count)), max(num_nodes - 1, 0))
+        nonroot_logits = parent_logits[:, :num_nodes].clone()
+        nonroot_logits[torch.arange(num_nodes, device=device), torch.arange(num_nodes, device=device)] = -1e9
+        best_scores, best_parents = nonroot_logits.max(dim=1)
+        if target_edge_count > 0:
+            child_order = torch.argsort(best_scores, descending=True).tolist()
+            for child in child_order:
+                parent = int(best_parents[child].item())
+                if parent < num_nodes and parent != child:
+                    edges.append([parent, child])
+                if len(edges) >= target_edge_count:
+                    break
+    else:
+        parent_temp = max(float(parent_temperature), 1e-6)
+        parent_probs = torch.softmax(parent_logits / parent_temp, dim=1)
+        if sample_nodes:
+            parent_ids = torch.multinomial(parent_probs, 1).squeeze(1)
+        else:
+            parent_ids = parent_logits.argmax(dim=1)
+
+        for child, parent in enumerate(parent_ids.tolist()):
+            if parent < num_nodes:
+                edges.append([parent, child])
     if edges:
         edge_index = torch.tensor(edges, device=device, dtype=torch.long).t().contiguous()
     else:
@@ -160,9 +212,13 @@ def build_dataset(
     node_counts = sample_node_counts(
         filtered_real_graphs, target_count=target_count, seed=seed
     )
+    edge_counts = sample_edge_counts(
+        filtered_real_graphs, target_count=len(node_counts), seed=seed
+    )
+    valid_ops_by_service = build_valid_ops_by_service(filtered_real_graphs)
 
     syn_graphs = []
-    for n_nodes in node_counts:
+    for n_nodes, target_edges in zip(node_counts, edge_counts):
         graph = generate_tt_synthetic_graph(
             decoder,
             num_nodes=n_nodes,
@@ -173,6 +229,8 @@ def build_dataset(
             node_temperature=node_temperature,
             parent_temperature=parent_temperature,
             duration_noise=duration_noise,
+            target_edge_count=target_edges,
+            valid_ops_by_service=valid_ops_by_service,
         )
         graph.y = torch.tensor(y_label, dtype=torch.long)
         syn_graphs.append(graph.cpu())

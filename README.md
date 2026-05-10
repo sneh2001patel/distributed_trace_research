@@ -44,6 +44,18 @@ After training the hierarchical encoder–decoder models, synthetic distributed 
 The datasets are saved in the directory `./datasets/`. Two different types of datasets where generated fixed-size and variable-size. Fixed-size indicated that the dataset was made to mimic the real dataset, where the variable-size dataset had liberty.
 The resulting synthetic datasets are saved in the same standardized formats used by the real traces, enabling them to be directly substituted into downstream learning pipelines without modification.
 
+### Random Sampling Baseline
+
+A non-learning random sampling baseline is available in `./random_sampling_baselines.py`. It fits only lower and upper bounds from the real SN and TT graph datasets, then uniformly samples graph sizes, edge counts, service IDs, operation IDs, and durations within those bounds.
+
+Generate all SN and TT normal/abnormal random-sampling baselines with:
+
+```bash
+python random_sampling_baselines.py --system both --mode both --seed 42
+```
+
+The generated files are written to `./datasets/baselines/*_random_sampling.pt` and can be used in the classifier and structural fidelity comparison scripts with `--generators random_sampling`.
+
 ## Downstream Task: Classification
 
 The generated synthetic datasets are subsequently used to evaluate their utility in downstream learning tasks. In particular, we train predictive models exclusively on synthetic data and evaluate them on held-out real data, following a train-on-synthetic-test-on-real (TSTR) evaluation protocol.

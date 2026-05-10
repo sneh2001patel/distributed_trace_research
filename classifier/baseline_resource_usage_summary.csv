@@ -1,0 +1,2 @@
+command,return_code,wall_seconds,process_tree_cpu_seconds,process_tree_avg_cpu_pct,process_tree_peak_rss_mb,process_tree_peak_vms_mb,gpu_peak_mem_used_total_mb,process_tree_gpu_peak_mem_mb,gpu_peak_util_pct,sample_interval_seconds,samples,timeseries_csv
+python run_baseline_comparison.py,-2,358.680728,215.07,59.961404,1956.421875,12809.382812,820.0,270.0,56.0,2.0,176,/home/snehpatel/research/generate_graphs/classifier/baseline_resource_usage_timeseries.csv

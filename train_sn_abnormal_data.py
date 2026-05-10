@@ -1,3 +1,5 @@
+import argparse
+
 import torch
 from torch.utils.data import Dataset
 from torch_geometric.data import InMemoryDataset
@@ -63,7 +65,11 @@ def _sample_graphs(graphs, target_count: int, seed: int = 42):
     return [graphs[i] for i in indices]
 
 
-def main():
+def main(
+    epochs: int = 300,
+    beta_final: float = 0.05,
+    enc_h_dropout: float = 1.0,
+):
     print("\n=== TRAINING SN ABNORMAL DATA ===")
 
     datapath = "./datasets/anomaly/SN/SN_abnormal.pt"
@@ -106,6 +112,7 @@ def main():
         max_nodes=64,
         head_hidden_dim=256,
         head_dropout=0.1,
+        enc_h_dropout=enc_h_dropout,
     ).to(device)
 
     run_training(
@@ -113,10 +120,10 @@ def main():
         enc,
         dec,
         device,
-        epochs=300,
+        epochs=epochs,
         batch_size=2,
         lr=3e-4,
-        beta_final=0.01,
+        beta_final=beta_final,
         use_class_weights=True,
         op_loss_scale=2.0,
         edge_weight=2.0,
@@ -140,6 +147,7 @@ def main():
                 "max_nodes": 64,
                 "head_hidden_dim": 256,
                 "head_dropout": 0.1,
+                "enc_h_dropout": enc_h_dropout,
             },
         },
         "./weights/sn_abnormal_vae_weights.pt",
@@ -158,4 +166,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Train SN abnormal hierarchical VAE.")
+    parser.add_argument("--epochs", type=int, default=300)
+    parser.add_argument("--beta-final", type=float, default=0.05)
+    parser.add_argument("--enc-h-dropout", type=float, default=1.0)
+    args = parser.parse_args()
+    main(
+        epochs=args.epochs,
+        beta_final=args.beta_final,
+        enc_h_dropout=args.enc_h_dropout,
+    )

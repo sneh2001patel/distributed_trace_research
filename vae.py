@@ -140,6 +140,7 @@ class GNNDecoder(nn.Module):
         max_nodes: int = 256,
         head_hidden_dim: int = None,
         head_dropout: float = 0.2,
+        enc_h_dropout: float = 0.0,
     ):
         super().__init__()
         self.latent_dim = latent_dim
@@ -147,6 +148,7 @@ class GNNDecoder(nn.Module):
         self.n_service_classes = n_service_classes
         self.n_op_classes = n_op_classes
         self.head_dropout = head_dropout
+        self.enc_h_dropout = enc_h_dropout
         head_hidden_dim = head_hidden_dim or hidden_dim
         self.encoder_hidden_dim = encoder_hidden_dim
 
@@ -218,6 +220,12 @@ class GNNDecoder(nn.Module):
         """
         device = z_graph.device
         n_nodes = z_nodes.size(0)
+        if self.training and self.enc_h_dropout > 0.0:
+            if self.enc_h_dropout >= 1.0:
+                enc_h = torch.zeros_like(enc_h)
+            else:
+                keep = torch.rand_like(enc_h) > self.enc_h_dropout
+                enc_h = enc_h * keep.float()
 
         h = self.graph_bias(z_graph).unsqueeze(0).expand(n_nodes, -1)
         h = h + self.node_latent_proj(z_nodes)

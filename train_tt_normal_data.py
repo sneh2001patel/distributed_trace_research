@@ -83,9 +83,10 @@ def main(
     epochs: int = 300,
     batch_size: int = 4,
     lr: float = 3e-4,
-    beta_final: float = 0.005,
+    beta_final: float = 0.03,
     edge_weight: float = 2.0,
     edge_rank_weight: float = 0.20,
+    enc_h_dropout: float = 1.0,
     patience: int = 20,
 ):
     print("\n=== TRAINING TT NORMAL DATA ===")
@@ -136,6 +137,7 @@ def main(
         max_nodes=64,
         head_hidden_dim=128,
         head_dropout=0.05,
+        enc_h_dropout=enc_h_dropout,
     ).to(device)
 
     train_summary = run_training(
@@ -172,6 +174,7 @@ def main(
                 "max_nodes": 64,
                 "head_hidden_dim": 128,
                 "head_dropout": 0.05,
+                "enc_h_dropout": enc_h_dropout,
             },
         },
         "./weights/tt_normal_vae_weights.pt",
@@ -214,9 +217,10 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=300)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--lr", type=float, default=3e-4)
-    parser.add_argument("--beta-final", type=float, default=0.005)
+    parser.add_argument("--beta-final", type=float, default=0.03)
     parser.add_argument("--edge-weight", type=float, default=2.0)
     parser.add_argument("--edge-rank-weight", type=float, default=0.20)
+    parser.add_argument("--enc-h-dropout", type=float, default=1.0)
     parser.add_argument("--patience", type=int, default=20)
     args = parser.parse_args()
     main(
@@ -229,5 +233,6 @@ if __name__ == "__main__":
         beta_final=args.beta_final,
         edge_weight=args.edge_weight,
         edge_rank_weight=args.edge_rank_weight,
+        enc_h_dropout=args.enc_h_dropout,
         patience=args.patience,
     )

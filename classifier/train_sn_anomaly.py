@@ -117,6 +117,19 @@ def _append_results_csv(path: str, row: dict):
         writer.writerow(row)
 
 
+def _validate_zero_real_setup(summary: dict, real_percent):
+    if real_percent != 0.0:
+        return
+    if (
+        summary["train_real_total"] != 0
+        or summary["train_normal_real"] != 0
+        or summary["train_abnormal_real"] != 0
+    ):
+        raise RuntimeError(f"--real 0 produced real training data: {summary}")
+    if summary.get("val_source") != "synthetic":
+        raise RuntimeError(f"--real 0 must use synthetic validation: {summary}")
+
+
 def main(
     weights_path="./sn_anomaly_classifier_weights.pt",
     syn_normal_path=None,
@@ -141,6 +154,15 @@ def main(
     anomaly_dir = os.path.abspath(os.path.join(base_dir, "..", "datasets", "anomaly", "SN"))
     syn_normal_path = syn_normal_path or os.path.join(anomaly_dir, "SN_normal_synthetic.pt")
     syn_abnormal_path = syn_abnormal_path or os.path.join(anomaly_dir, "SN_abnormal_synthetic.pt")
+    if generator_name == "random_sampling":
+        for label, path in {
+            "normal": syn_normal_path,
+            "abnormal": syn_abnormal_path,
+        }.items():
+            if "random_sampling" not in os.path.basename(path):
+                raise ValueError(
+                    f"random_sampling generator received non-random {label} path: {path}"
+                )
 
     train_ds, val_ds, test_ds, summary = prepare_sn_anomaly_datasets(
         syn_normal_path=syn_normal_path,
@@ -154,6 +176,7 @@ def main(
         max_synth_per_class=max_synth_per_class,
         seed=seed,
     )
+    _validate_zero_real_setup(summary, real_percent)
     print("Dataset summary:", summary)
     train_total = summary["train_real_total"] + summary["train_synth_total"]
     if train_total > 0:

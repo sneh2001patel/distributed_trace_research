@@ -8,7 +8,12 @@ from torch_geometric.data.data import DataEdgeAttr, DataTensorAttr
 from torch_geometric.loader import DataLoader
 from torch_geometric.utils import to_undirected
 
-from flat_vae import FlatGNNDecoder, FlatGraphEncoderVAE, flat_vae_loss
+from flat_vae import (
+    FlatGNNDecoder,
+    FlatGraphEncoderVAE,
+    denormalize_duration,
+    flat_vae_loss,
+)
 
 
 class LoadDataset(InMemoryDataset):
@@ -65,6 +70,89 @@ def _duration_stats(graphs):
     durations = torch.cat([graph.x[:, 2] for graph in graphs], dim=0)
     log_duration = torch.log1p(torch.clamp(durations, min=0))
     return log_duration.mean().item(), (log_duration.std().item() or 1.0)
+
+
+@torch.no_grad()
+def evaluate_reconstruction(dataset, encoder, decoder, device, edge_threshold: float):
+    encoder.eval()
+    decoder.eval()
+
+    total_nodes = 0
+    correct_service = 0
+    correct_op = 0
+    duration_abs_err = 0.0
+    edge_tp = edge_fp = edge_fn = 0
+    predicted_edges = 0
+    real_edges = 0
+
+    for data in DataLoader(dataset, batch_size=1, shuffle=False):
+        data = data.to(device)
+        mu, logvar, z = encoder(data.x, data.edge_index, data.batch)
+        service_logits, op_logits, duration_pred, edge_logits = decoder.decode(
+            z[0], data.num_nodes
+        )
+
+        service_pred = service_logits.argmax(dim=1)
+        op_pred = op_logits.argmax(dim=1)
+        dur_pred = denormalize_duration(
+            duration_pred,
+            encoder.duration_mean,
+            encoder.duration_std,
+        )
+
+        service_real = data.x[:, 0].long()
+        op_real = data.x[:, 1].long()
+        dur_real = data.x[:, 2]
+
+        total_nodes += data.num_nodes
+        correct_service += (service_pred == service_real).sum().item()
+        correct_op += (op_pred == op_real).sum().item()
+        duration_abs_err += torch.abs(dur_pred - dur_real).sum().item()
+
+        adj_real = torch.zeros((data.num_nodes, data.num_nodes), device=device)
+        if data.edge_index.numel() > 0:
+            adj_real[data.edge_index[0], data.edge_index[1]] = 1.0
+
+        adj_pred = (torch.sigmoid(edge_logits) > edge_threshold).float()
+        mask = torch.triu(
+            torch.ones(data.num_nodes, data.num_nodes, device=device), diagonal=1
+        ).bool()
+        real_vec = adj_real[mask]
+        pred_vec = adj_pred[mask]
+
+        edge_tp_batch = ((pred_vec == 1) & (real_vec == 1)).sum().item()
+        edge_fp_batch = ((pred_vec == 1) & (real_vec == 0)).sum().item()
+        edge_fn_batch = ((pred_vec == 0) & (real_vec == 1)).sum().item()
+        edge_tp += edge_tp_batch
+        edge_fp += edge_fp_batch
+        edge_fn += edge_fn_batch
+        predicted_edges += edge_tp_batch + edge_fp_batch
+        real_edges += edge_tp_batch + edge_fn_batch
+
+    service_acc = correct_service / total_nodes if total_nodes > 0 else 0.0
+    op_acc = correct_op / total_nodes if total_nodes > 0 else 0.0
+    dur_mae = duration_abs_err / total_nodes if total_nodes > 0 else 0.0
+    precision = edge_tp / (edge_tp + edge_fp) if (edge_tp + edge_fp) > 0 else 0.0
+    recall = edge_tp / (edge_tp + edge_fn) if (edge_tp + edge_fn) > 0 else 0.0
+    f1 = (
+        (2 * precision * recall / (precision + recall))
+        if (precision + recall) > 0
+        else 0.0
+    )
+    return {
+        "total_nodes": total_nodes,
+        "service_acc": service_acc,
+        "op_acc": op_acc,
+        "dur_mae": dur_mae,
+        "edge_precision": precision,
+        "edge_recall": recall,
+        "edge_f1": f1,
+        "edge_tp": edge_tp,
+        "edge_fp": edge_fp,
+        "edge_fn": edge_fn,
+        "predicted_edges": predicted_edges,
+        "real_edges": real_edges,
+    }
 
 
 def train(args):
@@ -177,6 +265,27 @@ def train(args):
     )
     print(f"saved {args.out_weights}")
 
+    metrics = evaluate_reconstruction(
+        dataset,
+        encoder,
+        decoder,
+        device,
+        edge_threshold=args.eval_edge_threshold,
+    )
+    print("\n=== Reconstruction Evaluation ===")
+    print(f"Total nodes evaluated: {metrics['total_nodes']}")
+    print(f"Service accuracy: {metrics['service_acc']*100:.2f}%")
+    print(f"Op accuracy:  {metrics['op_acc']*100:.2f}%")
+    print(f"Duration MAE: {metrics['dur_mae']:.4f}")
+    print(f"Edge precision: {metrics['edge_precision']*100:.2f}%")
+    print(f"Edge recall:    {metrics['edge_recall']*100:.2f}%")
+    print(f"Edge F1:        {metrics['edge_f1']*100:.2f}%")
+    print(
+        "Edge counts: "
+        f"TP={metrics['edge_tp']} FP={metrics['edge_fp']} FN={metrics['edge_fn']} "
+        f"Predicted={metrics['predicted_edges']} Real={metrics['real_edges']}"
+    )
+
 
 def main():
     parser = argparse.ArgumentParser(description="Train one-latent graph VAE baseline.")
@@ -197,6 +306,7 @@ def main():
     parser.add_argument("--edge-weight", type=float, default=1.0)
     parser.add_argument("--edge-neg-weight", type=float, default=3.0)
     parser.add_argument("--op-loss-scale", type=float, default=1.6)
+    parser.add_argument("--eval-edge-threshold", type=float, default=0.9)
     args = parser.parse_args()
     train(args)
 

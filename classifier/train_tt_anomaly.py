@@ -5,17 +5,13 @@ import csv
 
 import torch
 import torch.nn.functional as F
-from torch_geometric.loader import DataLoader
-
 try:
-    from model_tt import TTGraphClassifier
+    from model import GraphClassifier
     from prepare_anomaly_datasets import load_graphs, prepare_tt_anomaly_datasets
 except ModuleNotFoundError:
-    from classifier.model_tt import TTGraphClassifier
-    from classifier.prepare_anomaly_datasets import (
-        load_graphs,
-        prepare_tt_anomaly_datasets,
-    )
+    from classifier.model import GraphClassifier
+    from classifier.prepare_anomaly_datasets import load_graphs, prepare_tt_anomaly_datasets
+from torch_geometric.loader import DataLoader
 
 
 def _max_ids(graphs):
@@ -115,14 +111,6 @@ def _weighted_prf(cm: torch.Tensor):
     return weighted_precision, weighted_recall, weighted_f1
 
 
-@torch.no_grad()
-def _evaluate_loader(model, loader, device, class_weights=None):
-    loss, acc = _run_epoch(model, loader, device, optimizer=None, class_weights=class_weights)
-    cm = _confusion_matrix(model, loader, device, num_classes=2)
-    weighted_precision, weighted_recall, weighted_f1 = _weighted_prf(cm)
-    return loss, acc, cm, weighted_precision, weighted_recall, weighted_f1
-
-
 def _append_results_csv(path: str, row: dict):
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     file_exists = os.path.exists(path)
@@ -131,6 +119,19 @@ def _append_results_csv(path: str, row: dict):
         if not file_exists:
             writer.writeheader()
         writer.writerow(row)
+
+
+def _validate_zero_real_setup(summary: dict, real_percent):
+    if real_percent != 0.0:
+        return
+    if (
+        summary["train_real_total"] != 0
+        or summary["train_normal_real"] != 0
+        or summary["train_abnormal_real"] != 0
+    ):
+        raise RuntimeError(f"--real 0 produced real training data: {summary}")
+    if summary.get("val_source") != "synthetic":
+        raise RuntimeError(f"--real 0 must use synthetic validation: {summary}")
 
 
 def main(
@@ -159,6 +160,15 @@ def main(
     anomaly_dir = os.path.abspath(os.path.join(base_dir, "..", "datasets", "anomaly", "TT"))
     syn_normal_path = syn_normal_path or os.path.join(anomaly_dir, "TT_normal_synthetic.pt")
     syn_abnormal_path = syn_abnormal_path or os.path.join(anomaly_dir, "TT_abnormal_synthetic.pt")
+    if generator_name == "random_sampling":
+        for label, path in {
+            "normal": syn_normal_path,
+            "abnormal": syn_abnormal_path,
+        }.items():
+            if "random_sampling" not in os.path.basename(path):
+                raise ValueError(
+                    f"random_sampling generator received non-random {label} path: {path}"
+                )
 
     train_ds, val_ds, test_ds, summary = prepare_tt_anomaly_datasets(
         syn_normal_path=syn_normal_path,
@@ -174,6 +184,7 @@ def main(
         min_nodes=min_nodes,
         seed=seed,
     )
+    _validate_zero_real_setup(summary, real_percent)
     print("Dataset summary:", summary)
     train_total = summary["train_real_total"] + summary["train_synth_total"]
     if train_total > 0:
@@ -191,14 +202,14 @@ def main(
     n_services, n_ops = _max_ids(real_graphs)
     dur_mean, dur_std = _duration_stats(train_graphs + real_graphs)
 
-    model = TTGraphClassifier(
+    model = GraphClassifier(
         n_services=n_services,
         n_ops=n_ops,
         num_classes=2,
-        embed_dim=32,
-        hidden_dim=96,
-        num_layers=3,
-        dropout=0.15,
+        embed_dim=48,
+        hidden_dim=128,
+        num_layers=2,
+        dropout=0.2,
         duration_mean=dur_mean,
         duration_std=dur_std,
     )
@@ -206,52 +217,31 @@ def main(
     model.to(device)
 
     class_weights = _class_weights(train_graphs).to(device)
-    train_loader = DataLoader(train_ds, batch_size=32, shuffle=True)
-    val_loader = DataLoader(val_ds, batch_size=32)
-    test_loader = DataLoader(test_ds, batch_size=32)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=5e-5)
+    train_loader = DataLoader(train_ds, batch_size=8, shuffle=True)
+    val_loader = DataLoader(val_ds, batch_size=8)
+    test_loader = DataLoader(test_ds, batch_size=8)
+    optimizer = torch.optim.Adam(model.parameters(), lr=3e-4, weight_decay=1e-4)
 
-    best_val_f1 = None
-    best_val_loss = None
-    patience = 20
-    stale_epochs = 0
+    best_val = None
     for epoch in range(1, epochs + 1):
         train_loss, train_acc = _run_epoch(
             model, train_loader, device, optimizer, class_weights
         )
-        val_loss, val_acc, _, val_w_precision, val_w_recall, val_w_f1 = _evaluate_loader(
-            model, val_loader, device
-        )
-        improved = (
-            best_val_f1 is None
-            or val_w_f1 > best_val_f1 + 1e-6
-            or (
-                abs(val_w_f1 - best_val_f1) <= 1e-6
-                and (best_val_loss is None or val_loss < best_val_loss)
-            )
-        )
-        if improved:
-            best_val_f1 = val_w_f1
-            best_val_loss = val_loss
-            stale_epochs = 0
+        val_loss, val_acc = _run_epoch(model, val_loader, device)
+        if best_val is None or val_loss < best_val:
+            best_val = val_loss
             torch.save(model.state_dict(), weights_path)
-        else:
-            stale_epochs += 1
         print(
             f"Epoch {epoch:03d} | train {train_loss:.4f}/{train_acc:.3f} | "
-            f"val {val_loss:.4f}/{val_acc:.3f} | "
-            f"val_weighted P={val_w_precision:.3f} R={val_w_recall:.3f} F1={val_w_f1:.3f}"
+            f"val {val_loss:.4f}/{val_acc:.3f}"
         )
-        if stale_epochs >= patience:
-            print(f"Early stopping at epoch {epoch:03d} (no validation F1 improvement for {patience} epochs)")
-            break
 
     model.load_state_dict(torch.load(weights_path, map_location=device))
-    test_loss, test_acc, cm, weighted_precision, weighted_recall, weighted_f1 = _evaluate_loader(
-        model, test_loader, device
-    )
+    test_loss, test_acc = _run_epoch(model, test_loader, device)
     print(f"Test {test_loss:.4f}/{test_acc:.3f}")
+    cm = _confusion_matrix(model, test_loader, device, num_classes=2)
     prf = _per_class_prf(cm)
+    weighted_precision, weighted_recall, weighted_f1 = _weighted_prf(cm)
     print("Confusion Matrix (rows=true, cols=pred):")
     print(cm)
     print(
@@ -341,7 +331,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--epochs",
         type=int,
-        default=120,
+        default=50,
         help="Maximum classifier training epochs.",
     )
     parser.add_argument(
