@@ -101,3 +101,143 @@ Methodology Section (one spot)
     Lines 379–381 — the fixed-size and variable-size generation subsection. Since you're no longer making it an RQ, you don't need to remove it entirely, but the framing "Variable-size generation introduces controlled structural diversity, which is important for training robust downstream models" shouldn't imply it's being evaluated comparatively
 
 So to summarize the priority order: Evaluation > Introduction RQs > Industrial lessons > Abstract > Methodology framing. The evaluation section is about 70% of the work. Want to start drafting the new RQ2 and RQ3 sections?
+
+
+
+
+
+Possible metrics:
+nearest-neighbor distance between synthetic and real traces
+duplicate-rate / near-duplicate-rate
+coverage of service-operation patterns
+distribution of unique trace structures
+novelty rate: percentage of generated traces whose edge/service-operation sequence does not exactly match a training trace
+
+Generate the same number of synthetic traces as the training set, e.g., 1,244 SN and 1,244 TT. For each trace, create a trace signature:
+Signature = set of node labels + set of directed edge labels
+Node label: (service, operation)
+Edge label: (parent_service, parent_operation) -> (child_service, child_operation)
+Metric
+
+How to compute
+
+Meaning
+
+
+Exact duplicate rate
+
+% synthetic signatures that exactly match any real training signature
+
+Lower means less copying
+
+
+Unique synthetic ratio
+
+# unique synthetic signatures / # synthetic traces
+
+Higher means more diversity
+
+
+Novel structure ratio
+
+% synthetic traces whose signature does not appear in training set
+
+Higher means more novelty
+
+
+Nearest-neighbor similarity score
+
+For each synthetic trace, find most similar real trace using Jaccard similarity over edge labels
+
+Lower/moderate means less memorization
+
+
+95th percentile NN similarity
+
+95th percentile of nearest-neighbor similarities
+
+Detects near-copied traces
+
+
+
+Pleas read it and let me know what do you think of doing it?
+
+Try stratified sampling to show representativeness of generated data. In RQ1 add also :
+span count distribution ,  duration distribution ,  service frequency distribution ,  operation frequency distribution ,  graph depth / edge count distribution
+Setup: Use the real test traces and the generated synthetic traces for each system separately: SN and TT. For each system:
+Generate the same number of synthetic traces as real traces
+SN: 1,244 synthetic traces
+TT: 1,244 synthetic traces
+Stratify real traces by trace size
+Use number of spans per trace as the stratum.
+Example bins:
+Small traces:   1–5 spans
+Medium traces:  6–10 spans
+Large traces:   11–20 spans
+Very large:     >20 spans
+For SN, since traces range 3–30 spans, this works well.
+For TT, since traces range 1–23 spans, it also works.
+Sample synthetic traces according to the same bin proportions
+For example, if 40% of real SN traces are in the 6–10 span bin, then 40% of sampled synthetic SN traces should also come from that bin.
+Compare distributions within each stratum
+For each bin, compare real vs synthetic on:  Service frequency, Operation frequency, Duration distribution, Edge count, Graph depth, Branching factor
+Report distribution similarity
+Use Jensen-Shannon Distance for service/operation distributions
+Wasserstein Distance or MAE for duration distributions
+MAE for graph statistics such as edge count and depth
+
+Metric
+
+1–5
+
+6–10
+
+11–20
+
+>20
+
+
+Service Dist. (JSD)
+
+0.03
+
+0.04
+
+0.05
+
+0.06
+
+
+Operation Dist. (JSD)
+
+0.04
+
+0.05
+
+0.06
+
+0.07
+
+
+Duration (Wass.)
+
+0.12
+
+0.15
+
+0.18
+
+0.21
+
+
+Edge Count (MAE)
+
+0.8
+
+1.1
+
+1.5
+
+2.0
+
+

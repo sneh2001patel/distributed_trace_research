@@ -8,7 +8,7 @@ import torch
 from torch_geometric.data import Data, InMemoryDataset
 from torch_geometric.data.data import DataEdgeAttr
 
-from vae import _log_denormalize_duration
+from vae import GraphEncoderVAE, _log_denormalize_duration
 from vae_tt import TTGNNDecoder
 
 
@@ -28,16 +28,15 @@ def load_graphs(datapath: str):
     return [ds.get(i) for i in range(len(ds))]
 
 
-def load_decoder_from_checkpoint(weights_path: str, device: torch.device):
+def load_encoder_decoder_from_checkpoint(weights_path: str, device: torch.device):
     checkpoint = torch.load(weights_path, map_location=device)
     cfg = checkpoint["config"]
-    state = checkpoint["decoder_state"]
+    dec_state = checkpoint["decoder_state"]
 
-    max_nodes = int(state["pos_emb.weight"].shape[0])
-
+    max_nodes = int(dec_state["pos_emb.weight"].shape[0])
     head_hidden_dim = cfg.get("head_hidden_dim")
     if head_hidden_dim is None:
-        head_hidden_dim = int(state["service_head.0.weight"].shape[0])
+        head_hidden_dim = int(dec_state["service_head.0.weight"].shape[0])
 
     dec = TTGNNDecoder(
         latent_dim=cfg["latent_dim"],
@@ -50,13 +49,96 @@ def load_decoder_from_checkpoint(weights_path: str, device: torch.device):
         head_dropout=cfg.get("head_dropout", 0.05),
         enc_h_dropout=cfg.get("enc_h_dropout", 0.0),
     ).to(device)
-    dec.load_state_dict(state)
+    dec.load_state_dict(dec_state)
     dec.eval()
+
+    enc = GraphEncoderVAE(
+        n_services=cfg["num_services"],
+        n_ops=cfg["num_ops"],
+        duration_mean=cfg["duration_mean"],
+        duration_std=cfg["duration_std"],
+        hidden_ch=cfg.get("hidden_ch", cfg["hidden_dim"]),
+        embed_dim=cfg.get("embed_dim", 32),
+        latent_dim=cfg["latent_dim"],
+    ).to(device)
+    enc.load_state_dict(checkpoint["encoder_state"], strict=False)
+    enc.eval()
+
+    return enc, dec, cfg
+
+
+# Keep old name as alias so any other callers still work
+def load_decoder_from_checkpoint(weights_path: str, device: torch.device):
+    _, dec, cfg = load_encoder_decoder_from_checkpoint(weights_path, device)
     return dec, cfg
+
+
+@torch.no_grad()
+def build_latent_pool(encoder, graphs, device: torch.device):
+    """
+    Encode every training graph and store per-graph posteriors indexed by node
+    count.  Sampling z_n from a graph with matching node count preserves
+    per-node service/op identity instead of averaging it away.
+    """
+    by_n = {}
+    for graph in graphs:
+        graph = graph.to(device)
+        batch = torch.zeros(graph.num_nodes, dtype=torch.long, device=device)
+        enc_out = encoder(graph.x, graph.edge_index, batch)
+        mu_g, logvar_g, _ = enc_out["graph"]
+        mu_n, logvar_n, _ = enc_out["node"]
+        entry = {
+            "mu_g":     mu_g.squeeze(0).cpu(),
+            "logvar_g": logvar_g.squeeze(0).cpu(),
+            "mu_n":     mu_n.cpu(),
+            "logvar_n": logvar_n.cpu(),
+        }
+        by_n.setdefault(graph.num_nodes, []).append(entry)
+    return by_n
+
+
+def sample_from_pool(
+    pool: dict,
+    target_n_nodes: int,
+    device: torch.device,
+    noise_scale: float = 1.0,
+):
+    """
+    Pick a training graph whose node count matches target_n_nodes (or the
+    closest available), then sample z_g and z_n from its posterior.
+    """
+    if target_n_nodes in pool:
+        entries = pool[target_n_nodes]
+    else:
+        closest = min(pool.keys(), key=lambda k: abs(k - target_n_nodes))
+        entries = pool[closest]
+
+    entry = random.choice(entries)
+    mu_g     = entry["mu_g"].to(device)
+    logvar_g = entry["logvar_g"].to(device)
+    mu_n     = entry["mu_n"].to(device)
+    logvar_n = entry["logvar_n"].to(device)
+
+    z_g = mu_g + noise_scale * (0.5 * logvar_g).exp() * torch.randn_like(mu_g)
+    z_n = mu_n + noise_scale * (0.5 * logvar_n).exp() * torch.randn_like(mu_n)
+
+    actual = z_n.size(0)
+    if actual > target_n_nodes:
+        z_n = z_n[:target_n_nodes]
+    elif actual < target_n_nodes:
+        extra = target_n_nodes - actual
+        idx = torch.randint(actual, (extra,), device=device)
+        z_n = torch.cat([z_n, z_n[idx] + 0.1 * torch.randn(extra, z_n.size(1), device=device)], dim=0)
+
+    return z_g, z_n
 
 
 def filter_graphs_by_max_nodes(graphs, max_nodes: int):
     return [g for g in graphs if g.num_nodes <= max_nodes]
+
+
+def filter_graphs_by_node_range(graphs, min_nodes: int, max_nodes: int):
+    return [g for g in graphs if min_nodes <= g.num_nodes <= max_nodes]
 
 
 def sample_node_counts(graphs, target_count: int = None, seed: int = 42):
@@ -68,6 +150,48 @@ def sample_node_counts(graphs, target_count: int = None, seed: int = 42):
     return [rng.choice(counts) for _ in range(target)]
 
 
+def sample_node_counts_stratified(
+    graphs,
+    target_count: int = None,
+    seed: int = 42,
+    buckets: list = None,
+):
+    """
+    Sample node counts with equal weight across size buckets so the large-graph
+    tail is not drowned out by the majority of small graphs.
+
+    buckets: list of (lo, hi) inclusive ranges. Defaults to [(1,3),(4,30),(31,9999)].
+    """
+    if buckets is None:
+        buckets = [(1, 3), (4, 30), (31, 9999)]
+
+    rng = random.Random(seed)
+    bucketed = {b: [] for b in buckets}
+    for g in graphs:
+        n = g.num_nodes
+        for lo, hi in buckets:
+            if lo <= n <= hi:
+                bucketed[(lo, hi)].append(g)
+                break
+
+    non_empty = [(b, gs) for b, gs in bucketed.items() if gs]
+    if not non_empty:
+        return sample_node_counts(graphs, target_count=target_count, seed=seed)
+
+    target = target_count or len(graphs)
+    per_bucket = target // len(non_empty)
+    remainder = target % len(non_empty)
+
+    counts = []
+    for i, (_, gs) in enumerate(non_empty):
+        n_take = per_bucket + (1 if i < remainder else 0)
+        bucket_counts = [g.num_nodes for g in gs]
+        counts.extend([rng.choice(bucket_counts) for _ in range(n_take)])
+
+    rng.shuffle(counts)
+    return counts
+
+
 def sample_edge_counts(graphs, target_count: int = None, seed: int = 42):
     counts = [int(g.edge_index.size(1)) for g in graphs]
     target = target_count or len(counts)
@@ -75,6 +199,21 @@ def sample_edge_counts(graphs, target_count: int = None, seed: int = 42):
     if target <= len(counts):
         return rng.sample(counts, target)
     return [rng.choice(counts) for _ in range(target)]
+
+
+def sample_edge_counts_for_node_counts(graphs, node_counts: list, seed: int = 42):
+    """Sample edge counts from real graphs whose node count is closest to each target."""
+    by_n = {}
+    for g in graphs:
+        by_n.setdefault(g.num_nodes, []).append(int(g.edge_index.size(1)))
+    all_counts = sorted(by_n.keys())
+
+    rng = random.Random(seed + 17)
+    result = []
+    for n in node_counts:
+        closest = min(all_counts, key=lambda k: abs(k - n))
+        result.append(rng.choice(by_n[closest]))
+    return result
 
 
 def build_valid_ops_by_service(graphs):
@@ -109,9 +248,13 @@ def generate_tt_synthetic_graph(
     duration_noise: float = 0.02,
     target_edge_count: int = None,
     valid_ops_by_service: dict[int, torch.Tensor] = None,
+    z_g: torch.Tensor = None,
+    z_n: torch.Tensor = None,
 ) -> Data:
-    z_g = torch.randn(decoder.latent_dim, device=device)
-    z_n = torch.randn(num_nodes, decoder.latent_dim, device=device)
+    if z_g is None:
+        z_g = torch.randn(decoder.latent_dim, device=device)
+    if z_n is None:
+        z_n = torch.randn(num_nodes, decoder.latent_dim, device=device)
     enc_h = torch.zeros(num_nodes, decoder.encoder_hidden_dim, device=device)
 
     service_logits, op_logits, duration_pred, parent_logits = decoder.decode_for_training(
@@ -193,32 +336,56 @@ def build_dataset(
     y_label: int,
     target_count: int = None,
     seed: int = 42,
+    min_nodes: int = 1,
     trained_node_cap: int = 30,
     sample_nodes: bool = True,
     node_temperature: float = 1.1,
     parent_temperature: float = 1.0,
     duration_noise: float = 0.02,
+    stratified: bool = False,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    decoder, cfg = load_decoder_from_checkpoint(weights_path, device)
+    encoder, decoder, cfg = load_encoder_decoder_from_checkpoint(weights_path, device)
 
     real_graphs = load_graphs(real_path)
-    filtered_real_graphs = filter_graphs_by_max_nodes(real_graphs, trained_node_cap)
-    if not filtered_real_graphs:
+    if not real_graphs:
+        raise RuntimeError(f"No real graphs found in {real_path}.")
+
+    eligible_graphs = filter_graphs_by_node_range(
+        real_graphs,
+        min_nodes=min_nodes,
+        max_nodes=trained_node_cap,
+    )
+    if not eligible_graphs:
         raise RuntimeError(
-            f"No TT real graphs <= {trained_node_cap} nodes found in {real_path}."
+            f"No real graphs in {real_path} matched "
+            f"{min_nodes} <= num_nodes <= {trained_node_cap}."
         )
 
-    node_counts = sample_node_counts(
-        filtered_real_graphs, target_count=target_count, seed=seed
+    print(
+        f"Building latent pool from {len(eligible_graphs)} eligible real graphs "
+        f"({min_nodes} <= nodes <= {trained_node_cap}) out of {len(real_graphs)} total."
     )
-    edge_counts = sample_edge_counts(
-        filtered_real_graphs, target_count=len(node_counts), seed=seed
-    )
-    valid_ops_by_service = build_valid_ops_by_service(filtered_real_graphs)
+    pool = build_latent_pool(encoder, eligible_graphs, device)
 
+    if stratified:
+        print("Using stratified node count sampling across size buckets.")
+        node_counts = sample_node_counts_stratified(
+            eligible_graphs, target_count=target_count, seed=seed
+        )
+    else:
+        node_counts = sample_node_counts(
+            eligible_graphs, target_count=target_count, seed=seed
+        )
+    edge_counts = sample_edge_counts_for_node_counts(
+        eligible_graphs, node_counts, seed=seed
+    )
+    valid_ops_by_service = build_valid_ops_by_service(eligible_graphs)
+
+    torch.manual_seed(seed)
     syn_graphs = []
     for n_nodes, target_edges in zip(node_counts, edge_counts):
+        z_g, z_n = sample_from_pool(pool, n_nodes, device)
         graph = generate_tt_synthetic_graph(
             decoder,
             num_nodes=n_nodes,
@@ -231,6 +398,8 @@ def build_dataset(
             duration_noise=duration_noise,
             target_edge_count=target_edges,
             valid_ops_by_service=valid_ops_by_service,
+            z_g=z_g,
+            z_n=z_n,
         )
         graph.y = torch.tensor(y_label, dtype=torch.long)
         syn_graphs.append(graph.cpu())
@@ -242,7 +411,8 @@ def build_dataset(
         "out_path": out_path,
         "graphs": len(syn_graphs),
         "real_graphs_total": len(real_graphs),
-        "real_graphs_used_for_sizes": len(filtered_real_graphs),
+        "real_graphs_used_for_sizes": len(eligible_graphs),
+        "min_nodes": min_nodes,
         "trained_node_cap": trained_node_cap,
         "node_count_min": min(node_counts) if node_counts else 0,
         "node_count_max": max(node_counts) if node_counts else 0,
@@ -277,8 +447,21 @@ def main():
         default=30,
         help="Only sample node counts from real TT graphs at or below the node cap used during TT VAE training.",
     )
+    parser.add_argument(
+        "--min-nodes",
+        type=int,
+        default=1,
+        help="Only sample node counts from real TT graphs at or above this size.",
+    )
     parser.add_argument("--parent-temperature", type=float, default=1.0)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--stratified",
+        action="store_true",
+        help="Sample node counts equally across size buckets (1-3, 4-30, 31+) "
+             "instead of following the empirical distribution. Use for normal class "
+             "only to amplify the large-graph tail signal.",
+    )
     args = parser.parse_args()
 
     jobs = []
@@ -323,8 +506,10 @@ def main():
             y_label=job["y_label"],
             target_count=proportional_counts.get(job["name"], args.target_count),
             seed=args.seed,
+            min_nodes=args.min_nodes,
             trained_node_cap=args.trained_node_cap,
             parent_temperature=args.parent_temperature,
+            stratified=args.stratified and job["name"] == "normal",
         )
 
     summary_path = ROOT / "datasets" / "anomaly" / "TT" / "synthetic_summary.json"

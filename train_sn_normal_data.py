@@ -159,7 +159,7 @@ def main(
     print(f"Total nodes evaluated: {metrics['total_nodes']}")
     print(f"Service accuracy: {metrics['service_acc']*100:.2f}%")
     print(f"Op accuracy:  {metrics['op_acc']*100:.2f}%")
-    print(f"Duration MAE: {metrics['dur_mae']:.4f}")
+    print(f"Duration MAE (log1p): {metrics['dur_mae']:.4f}")
     print(f"Edge precision: {metrics['edge_precision']*100:.2f}%")
     print(f"Edge recall:    {metrics['edge_recall']*100:.2f}%")
     print(f"Edge F1:        {metrics['edge_f1']*100:.2f}%")

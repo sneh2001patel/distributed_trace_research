@@ -230,12 +230,26 @@ def prepare_sn_anomaly_datasets(
         + real_train_normal
         + real_train_abnormal
     )
-    if real_percent is not None and target_real_total and target_real_total > 0:
+    val_real_normal_used = []
+    val_real_abnormal_used = []
+    if real_percent is None or real_percent == 0.0:
+        val_graphs = syn_val_normal + syn_val_abnormal
+        val_source = "synthetic"
+    elif real_percent == 100.0:
+        val_real_normal_used = real_val_normal
+        val_real_abnormal_used = real_val_abnormal
         val_graphs = real_val_normal + real_val_abnormal
         val_source = "real"
     else:
-        val_graphs = syn_val_normal + syn_val_abnormal
-        val_source = "synthetic"
+        syn_val_count = len(syn_val_normal) + len(syn_val_abnormal)
+        real_val_target = int(round(syn_val_count * real_percent / (100.0 - real_percent)))
+        real_normal_val_target, real_abnormal_val_target = _split_target_by_class(
+            real_val_normal, real_val_abnormal, real_val_target
+        )
+        val_real_normal_used = _take_count(real_val_normal, real_normal_val_target, seed=seed + 99)
+        val_real_abnormal_used = _take_count(real_val_abnormal, real_abnormal_val_target, seed=seed + 99)
+        val_graphs = syn_val_normal + syn_val_abnormal + val_real_normal_used + val_real_abnormal_used
+        val_source = "mixed"
     val_ds = GraphDataset(val_graphs)
     test_ds = GraphDataset(real_test_normal + real_test_abnormal)
 
@@ -244,10 +258,10 @@ def prepare_sn_anomaly_datasets(
         "train_abnormal_synth": len(syn_train_abnormal),
         "train_normal_real": len(real_train_normal),
         "train_abnormal_real": len(real_train_abnormal),
-        "val_normal_synth": len(syn_val_normal),
-        "val_abnormal_synth": len(syn_val_abnormal),
-        "val_normal_real": len(real_val_normal),
-        "val_abnormal_real": len(real_val_abnormal),
+        "val_normal_synth": 0 if real_percent == 100.0 else len(syn_val_normal),
+        "val_abnormal_synth": 0 if real_percent == 100.0 else len(syn_val_abnormal),
+        "val_normal_real": len(val_real_normal_used),
+        "val_abnormal_real": len(val_real_abnormal_used),
         "test_normal_real": len(real_test_normal),
         "test_abnormal_real": len(real_test_abnormal),
         "train_real_total": len(real_train_normal) + len(real_train_abnormal),

@@ -78,6 +78,7 @@ def _split_train_val(graphs, val_ratio: float = 0.0, seed: int = 42):
 
 def main(
     max_nodes: int = 30,
+    min_nodes: int = 1,
     target_graphs: int = 1000,
     val_ratio: float = 0.0,
     epochs: int = 300,
@@ -88,6 +89,8 @@ def main(
     edge_rank_weight: float = 0.20,
     enc_h_dropout: float = 1.0,
     patience: int = 20,
+    hidden_dim: int = 96,
+    head_hidden_dim: int = 128,
 ):
     print("\n=== TRAINING TT ABNORMAL DATA ===")
 
@@ -96,6 +99,8 @@ def main(
     filtered_graphs, dropped_graphs = _filter_graphs_by_max_nodes(
         base_dataset, max_nodes=max_nodes
     )
+    if min_nodes > 1:
+        filtered_graphs = [g for g in filtered_graphs if g.num_nodes >= min_nodes]
     if not filtered_graphs:
         raise RuntimeError("All TT abnormal graphs were filtered out.")
 
@@ -122,7 +127,7 @@ def main(
         n_ops=base_dataset.num_ops,
         duration_mean=duration_mean,
         duration_std=duration_std,
-        hidden_ch=96,
+        hidden_ch=hidden_dim,
         embed_dim=32,
         latent_dim=48,
         dropout=0.1,
@@ -130,12 +135,12 @@ def main(
 
     dec = TTGNNDecoder(
         latent_dim=48,
-        hidden_dim=96,
+        hidden_dim=hidden_dim,
         n_service_classes=base_dataset.num_services,
         n_op_classes=base_dataset.num_ops,
-        encoder_hidden_dim=96,
+        encoder_hidden_dim=hidden_dim,
         max_nodes=64,
-        head_hidden_dim=128,
+        head_hidden_dim=head_hidden_dim,
         head_dropout=0.05,
         enc_h_dropout=enc_h_dropout,
     ).to(device)
@@ -168,11 +173,11 @@ def main(
                 "duration_mean": duration_mean,
                 "duration_std": duration_std,
                 "latent_dim": 48,
-                "hidden_dim": 96,
+                "hidden_dim": hidden_dim,
                 "embed_dim": 32,
-                "encoder_hidden_dim": 96,
+                "encoder_hidden_dim": hidden_dim,
                 "max_nodes": 64,
-                "head_hidden_dim": 128,
+                "head_hidden_dim": head_hidden_dim,
                 "head_dropout": 0.05,
                 "enc_h_dropout": enc_h_dropout,
             },
@@ -193,7 +198,7 @@ def main(
         print(f"Total nodes evaluated: {val_metrics['total_nodes']}")
         print(f"Service accuracy: {val_metrics['service_acc']*100:.2f}%")
         print(f"Op accuracy:  {val_metrics['op_acc']*100:.2f}%")
-        print(f"Duration MAE: {val_metrics['dur_mae']:.4f}")
+        print(f"Duration MAE (log1p): {val_metrics['dur_mae']:.4f}")
         print(f"Edge precision: {val_metrics['edge_precision']*100:.2f}%")
         print(f"Edge recall:    {val_metrics['edge_recall']*100:.2f}%")
         print(f"Edge F1:        {val_metrics['edge_f1']*100:.2f}%")
@@ -201,7 +206,7 @@ def main(
     print(f"Total nodes evaluated: {full_metrics['total_nodes']}")
     print(f"Service accuracy: {full_metrics['service_acc']*100:.2f}%")
     print(f"Op accuracy:  {full_metrics['op_acc']*100:.2f}%")
-    print(f"Duration MAE: {full_metrics['dur_mae']:.4f}")
+    print(f"Duration MAE (log1p): {full_metrics['dur_mae']:.4f}")
     print(f"Edge precision: {full_metrics['edge_precision']*100:.2f}%")
     print(f"Edge recall:    {full_metrics['edge_recall']*100:.2f}%")
     print(f"Edge F1:        {full_metrics['edge_f1']*100:.2f}%")
@@ -212,6 +217,7 @@ if __name__ == "__main__":
         description="Train TT abnormal parent-decoder VAE."
     )
     parser.add_argument("--max-nodes", type=int, default=30)
+    parser.add_argument("--min-nodes", type=int, default=1)
     parser.add_argument("--target-graphs", type=int, default=1000)
     parser.add_argument("--val-ratio", type=float, default=0.0)
     parser.add_argument("--epochs", type=int, default=300)
@@ -222,9 +228,12 @@ if __name__ == "__main__":
     parser.add_argument("--edge-rank-weight", type=float, default=0.20)
     parser.add_argument("--enc-h-dropout", type=float, default=1.0)
     parser.add_argument("--patience", type=int, default=20)
+    parser.add_argument("--hidden-dim", type=int, default=96)
+    parser.add_argument("--head-hidden-dim", type=int, default=128)
     args = parser.parse_args()
     main(
         max_nodes=args.max_nodes,
+        min_nodes=args.min_nodes,
         target_graphs=args.target_graphs,
         val_ratio=args.val_ratio,
         epochs=args.epochs,
@@ -235,4 +244,6 @@ if __name__ == "__main__":
         edge_rank_weight=args.edge_rank_weight,
         enc_h_dropout=args.enc_h_dropout,
         patience=args.patience,
+        hidden_dim=args.hidden_dim,
+        head_hidden_dim=args.head_hidden_dim,
     )

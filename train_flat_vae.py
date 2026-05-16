@@ -14,6 +14,7 @@ from flat_vae import (
     denormalize_duration,
     flat_vae_loss,
 )
+from vae import compute_class_weights
 
 
 class LoadDataset(InMemoryDataset):
@@ -107,7 +108,9 @@ def evaluate_reconstruction(dataset, encoder, decoder, device, edge_threshold: f
         total_nodes += data.num_nodes
         correct_service += (service_pred == service_real).sum().item()
         correct_op += (op_pred == op_real).sum().item()
-        duration_abs_err += torch.abs(dur_pred - dur_real).sum().item()
+        dur_pred_log = torch.log1p(dur_pred.clamp(min=0))
+        dur_real_log = torch.log1p(dur_real.clamp(min=0))
+        duration_abs_err += torch.abs(dur_pred_log - dur_real_log).sum().item()
 
         adj_real = torch.zeros((data.num_nodes, data.num_nodes), device=device)
         if data.edge_index.numel() > 0:
@@ -195,13 +198,17 @@ def train(args):
         head_dropout=args.head_dropout,
     ).to(device)
 
-    loader = DataLoader(dataset, batch_size=1, shuffle=True)
+    loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
     optimizer = torch.optim.Adam(
         list(encoder.parameters()) + list(decoder.parameters()),
         lr=args.lr,
         weight_decay=1e-4,
     )
     warmup = max(5, int(args.epochs * 0.2))
+
+    service_weight, op_weight = compute_class_weights(dataset)
+    service_weight = service_weight.to(device)
+    op_weight = op_weight.to(device)
 
     for epoch in range(1, args.epochs + 1):
         encoder.train()
@@ -213,8 +220,9 @@ def train(args):
             data = data.to(device)
             optimizer.zero_grad()
             mu, logvar, z = encoder(data.x, data.edge_index, data.batch)
+            service_gt = data.x[:, 0].long()
             service_logits, op_logits, duration_pred, edge_logits = decoder.decode(
-                z[0], data.num_nodes
+                z[0], data.num_nodes, service_gt=service_gt
             )
             loss, node_l, edge_l, kl_l = flat_vae_loss(
                 data,
@@ -226,6 +234,8 @@ def train(args):
                 logvar,
                 encoder.duration_mean,
                 encoder.duration_std,
+                service_weight=service_weight,
+                op_weight=op_weight,
                 beta=beta,
                 edge_weight=args.edge_weight,
                 edge_neg_weight=args.edge_neg_weight,
@@ -276,7 +286,7 @@ def train(args):
     print(f"Total nodes evaluated: {metrics['total_nodes']}")
     print(f"Service accuracy: {metrics['service_acc']*100:.2f}%")
     print(f"Op accuracy:  {metrics['op_acc']*100:.2f}%")
-    print(f"Duration MAE: {metrics['dur_mae']:.4f}")
+    print(f"Duration MAE (log1p): {metrics['dur_mae']:.4f}")
     print(f"Edge precision: {metrics['edge_precision']*100:.2f}%")
     print(f"Edge recall:    {metrics['edge_recall']*100:.2f}%")
     print(f"Edge F1:        {metrics['edge_f1']*100:.2f}%")
@@ -299,7 +309,8 @@ def main():
     parser.add_argument("--latent-dim", type=int, default=64)
     parser.add_argument("--hidden-dim", type=int, default=128)
     parser.add_argument("--embed-dim", type=int, default=48)
-    parser.add_argument("--head-hidden-dim", type=int, default=256)
+    parser.add_argument("--head-hidden-dim", type=int, default=128)
+    parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--head-dropout", type=float, default=0.3)
     parser.add_argument("--max-nodes", type=int, default=256)
     parser.add_argument("--beta-final", type=float, default=0.02)

@@ -53,9 +53,9 @@ class GraphEncoderVAE(nn.Module):
 
         in_channels = embed_dim * 3
         self.conv1 = GCNConv(in_channels, hidden_ch)
-        self.bn1 = nn.BatchNorm1d(hidden_ch)
+        self.bn1 = nn.LayerNorm(hidden_ch)
         self.conv2 = GCNConv(hidden_ch, hidden_ch)
-        self.bn2 = nn.BatchNorm1d(hidden_ch)
+        self.bn2 = nn.LayerNorm(hidden_ch)
 
         self.lin_feat = nn.Linear(hidden_ch, hidden_ch // 2)
         self.dropout = dropout
@@ -178,8 +178,9 @@ class GNNDecoder(nn.Module):
             nn.Dropout(p=head_dropout),
             nn.Linear(head_hidden_dim, n_service_classes),
         )
+        # input = h_cls + service context (one-hot during training, softmax at inference)
         self.op_head = nn.Sequential(
-            nn.Linear(hidden_dim, head_hidden_dim),
+            nn.Linear(hidden_dim + n_service_classes, head_hidden_dim),
             nn.LayerNorm(head_hidden_dim),
             nn.GELU(),
             nn.Dropout(p=head_dropout),
@@ -211,12 +212,18 @@ class GNNDecoder(nn.Module):
         self.pos_emb = new_emb
 
     def decode_for_training(
-        self, z_graph: torch.Tensor, z_nodes: torch.Tensor, enc_h: torch.Tensor
+        self,
+        z_graph: torch.Tensor,
+        z_nodes: torch.Tensor,
+        enc_h: torch.Tensor,
+        service_gt: torch.Tensor = None,
     ):
         """
-        z_graph: (latent_dim,)
-        z_nodes: (n_nodes, latent_dim)
-        enc_h:   (n_nodes, encoder_hidden_dim)
+        z_graph:    (latent_dim,)
+        z_nodes:    (n_nodes, latent_dim)
+        enc_h:      (n_nodes, encoder_hidden_dim)
+        service_gt: (n_nodes,) int — ground-truth service ids for teacher forcing.
+                    Pass during training; omit at inference to use predicted softmax.
         """
         device = z_graph.device
         n_nodes = z_nodes.size(0)
@@ -246,7 +253,13 @@ class GNNDecoder(nn.Module):
 
         h_cls = self.fuse(torch.cat([h, enc_h], dim=1))
         service_logits = self.service_head(h_cls)
-        op_logits = self.op_head(h_cls)
+        if service_gt is not None:
+            service_context = F.one_hot(
+                service_gt.clamp(0, self.n_service_classes - 1), self.n_service_classes
+            ).float()
+        else:
+            service_context = torch.softmax(service_logits.detach(), dim=1)
+        op_logits = self.op_head(torch.cat([h_cls, service_context], dim=1))
         duration_pred = self.duration_head(h_cls)
 
         hi = h.unsqueeze(1).expand(-1, n_nodes, -1)
@@ -442,7 +455,9 @@ def evaluate_reconstruction(
         total_nodes += data.num_nodes
         correct_service += (service_pred == service_real).sum().item()
         correct_op += (op_pred == op_real).sum().item()
-        duration_abs_err += torch.abs(dur_pred - dur_real).sum().item()
+        dur_pred_log = torch.log1p(dur_pred.clamp(min=0))
+        dur_real_log = torch.log1p(dur_real.clamp(min=0))
+        duration_abs_err += torch.abs(dur_pred_log - dur_real_log).sum().item()
 
         adj_real = torch.zeros((data.num_nodes, data.num_nodes), device=device)
         if data.edge_index.numel() > 0:
@@ -518,8 +533,9 @@ def train_vae_epoch(
         mu_g, logvar_g, z_g = enc_out["graph"]
         mu_n, logvar_n, z_n = enc_out["node"]
 
+        service_gt = data.x[:, 0].long()
         service_logits, op_logits, duration_pred, edge_logits = (
-            decoder.decode_for_training(z_g[0], z_n, enc_out["node_h"])
+            decoder.decode_for_training(z_g[0], z_n, enc_out["node_h"], service_gt=service_gt)
         )
 
         loss, node_l, edge_l, kl_l = total_vae_loss(

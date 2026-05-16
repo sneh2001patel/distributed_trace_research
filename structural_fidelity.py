@@ -316,7 +316,7 @@ def compare(real_graphs: List[Data], synth_graphs: List[Data]) -> Dict[str, floa
     row["graph_feature_mmd_similarity"] = mmd_sim
     row["graph_feature_mmd"] = mmd
 
-    row["structural_ks_mean"] = float(
+    row["structure_mean"] = float(
         np.mean(
             [
                 row["node_count_ks_similarity"],
@@ -325,6 +325,15 @@ def compare(real_graphs: List[Data], synth_graphs: List[Data]) -> Dict[str, floa
                 row["avg_degree_ks_similarity"],
                 row["max_degree_ks_similarity"],
                 row["all_degrees_ks_similarity"],
+                row["graph_feature_mmd_similarity"],
+            ]
+        )
+    )
+    row["timing_mean"] = float(
+        np.mean(
+            [
+                row["duration_mean_ks_similarity"],
+                row["all_durations_ks_similarity"],
             ]
         )
     )
@@ -341,11 +350,9 @@ def compare(real_graphs: List[Data], synth_graphs: List[Data]) -> Dict[str, floa
     row["overall_fidelity"] = float(
         np.mean(
             [
-                row["structural_ks_mean"],
-                row["duration_mean_ks_similarity"],
-                row["all_durations_ks_similarity"],
+                row["structure_mean"],
+                row["timing_mean"],
                 row["semantic_mean"],
-                row["graph_feature_mmd_similarity"],
             ]
         )
     )
@@ -353,46 +360,104 @@ def compare(real_graphs: List[Data], synth_graphs: List[Data]) -> Dict[str, floa
 
 
 def write_markdown(rows: List[Dict[str, float]], out_path: Path):
-    def fmt(value):
-        if isinstance(value, str):
-            return value
-        return f"{float(value):.3f}"
+    def fmt(v):
+        return v if isinstance(v, str) else f"{float(v):.3f}"
+
+    struct_cols = [
+        ("node_count_ks_similarity", "Node KS"),
+        ("edge_count_ks_similarity", "Edge KS"),
+        ("density_ks_similarity", "Density KS"),
+        ("avg_degree_ks_similarity", "AvgDeg KS"),
+        ("max_degree_ks_similarity", "MaxDeg KS"),
+        ("all_degrees_ks_similarity", "AllDeg KS"),
+        ("graph_feature_mmd_similarity", "MMD Sim"),
+        ("structure_mean", "Mean"),
+    ]
+    timing_cols = [
+        ("duration_mean_ks_similarity", "DurMean KS"),
+        ("all_durations_ks_similarity", "AllDur KS"),
+        ("timing_mean", "Mean"),
+    ]
+    semantic_cols = [
+        ("service_js_similarity", "Svc JS"),
+        ("operation_js_similarity", "Op JS"),
+        ("service_operation_js_similarity", "SvcOp JS"),
+        ("service_operation_valid_mass", "Valid"),
+        ("semantic_mean", "Mean"),
+    ]
 
     systems = ["TT", "SN"]
-    fields = [
-        ("generator", "Generator"),
-        ("trace_class", "Class"),
-        ("overall_fidelity", "Overall"),
-        ("structural_ks_mean", "Structure"),
-        ("graph_feature_mmd_similarity", "Graph MMD Sim"),
-        ("node_count_ks_similarity", "Node KS Sim"),
-        ("edge_count_ks_similarity", "Edge KS Sim"),
-        ("density_ks_similarity", "Density KS Sim"),
-        ("all_degrees_ks_similarity", "Degree KS Sim"),
-        ("semantic_mean", "Semantic"),
-        ("service_operation_valid_mass", "Valid Svc-Op"),
-        ("all_durations_ks_similarity", "Duration KS Sim"),
-    ]
+    order = {"random_sampling": 0, "empirical": 1, "flat_vae": 2, "hierarchical_vae": 3}
+    cls_order = {"normal": 0, "abnormal": 1, "combined": 2}
+
     lines = [
         "# Structural Fidelity Comparison",
         "",
-        "Scores are similarities where higher is better. KS similarity is `1 - KS statistic`. Graph MMD similarity is `exp(-MMD)` over graph-level statistics.",
+        "All scores are similarities — higher is better.",
+        "",
+        "- **KS sim** = `1 − KS statistic` (0 = maximally different distributions, 1 = identical)",
+        "- **MMD sim** = `exp(−MMD)` over 11 graph-level features (node/edge counts, density, degree stats, duration stats, service/op counts)",
+        "- **JS sim** = `1 − Jensen-Shannon divergence` over discrete label distributions",
+        "- **Valid** = fraction of synthetic (service, op) pairs that appear in the real data",
+        "- **Structure Mean** = mean of 7 topology metrics (6 KS sims + MMD sim)",
+        "- **Duration Mean** = mean of 2 duration KS sims (per-graph mean duration, all node durations)",
+        "- **Semantic Mean** = mean of 4 label metrics (Svc JS, Op JS, SvcOp JS, Valid)",
+        "- **Overall** = mean(Structure Mean, Duration Mean, Semantic Mean) — three equal groups",
         "",
     ]
+
     for system in systems:
         lines.append(f"## {system}")
         lines.append("")
-        header = "| " + " | ".join(title for _, title in fields) + " |"
-        sep = "|---" + "|---:" * (len(fields) - 1) + "|"
-        lines.extend([header, sep])
-        sys_rows = [r for r in rows if r["system"] == system]
-        order = {"random_sampling": 0, "empirical": 1, "flat_vae": 2, "hierarchical_vae": 3}
-        cls_order = {"normal": 0, "abnormal": 1, "combined": 2}
-        sys_rows.sort(key=lambda r: (order.get(r["generator"], 9), cls_order.get(r["trace_class"], 9)))
+        sys_rows = sorted(
+            [r for r in rows if r["system"] == system],
+            key=lambda r: (order.get(r["generator"], 9), cls_order.get(r["trace_class"], 9)),
+        )
+
+        lines.append("<table>")
+        lines.append("<thead>")
+        lines.append("<tr>")
+        lines.append('  <th rowspan="2">Generator</th>')
+        lines.append('  <th rowspan="2">Class</th>')
+        lines.append(f'  <th colspan="{len(struct_cols)}">Structure</th>')
+        lines.append(f'  <th colspan="{len(timing_cols)}">Duration</th>')
+        lines.append(f'  <th colspan="{len(semantic_cols)}">Semantic</th>')
+        lines.append('  <th rowspan="2">Overall</th>')
+        lines.append("</tr>")
+        lines.append("<tr>")
+        for _, label in struct_cols:
+            lines.append(f"  <th>{label}</th>")
+        for _, label in timing_cols:
+            lines.append(f"  <th>{label}</th>")
+        for _, label in semantic_cols:
+            lines.append(f"  <th>{label}</th>")
+        lines.append("</tr>")
+        lines.append("</thead>")
+        lines.append("<tbody>")
+
         for row in sys_rows:
-            vals = [fmt(row[key]) for key, _ in fields]
-            lines.append("| " + " | ".join(vals) + " |")
+            lines.append("<tr>")
+            lines.append(f'  <td>{row["generator"]}</td>')
+            lines.append(f'  <td>{row["trace_class"]}</td>')
+            for key, _ in struct_cols:
+                val = fmt(row[key])
+                tag = "<td><b>" + val + "</b></td>" if key == "structure_mean" else f"<td>{val}</td>"
+                lines.append(f"  {tag}")
+            for key, _ in timing_cols:
+                val = fmt(row[key])
+                tag = "<td><b>" + val + "</b></td>" if key == "timing_mean" else f"<td>{val}</td>"
+                lines.append(f"  {tag}")
+            for key, _ in semantic_cols:
+                val = fmt(row[key])
+                tag = "<td><b>" + val + "</b></td>" if key == "semantic_mean" else f"<td>{val}</td>"
+                lines.append(f"  {tag}")
+            lines.append(f'  <td><b>{fmt(row["overall_fidelity"])}</b></td>')
+            lines.append("</tr>")
+
+        lines.append("</tbody>")
+        lines.append("</table>")
         lines.append("")
+
     out_path.write_text("\n".join(lines))
 
 
@@ -435,7 +500,7 @@ def main():
                 rows.append(row)
                 print(
                     f"{system} {generator} {cls}: overall={row['overall_fidelity']:.3f} "
-                    f"structure={row['structural_ks_mean']:.3f} semantic={row['semantic_mean']:.3f}"
+                    f"structure={row['structure_mean']:.3f} timing={row['timing_mean']:.3f} semantic={row['semantic_mean']:.3f}"
                 )
             combined_real = real_by_class["normal"] + real_by_class["abnormal"]
             combined_synth = synth_by_class["normal"] + synth_by_class["abnormal"]
@@ -444,7 +509,7 @@ def main():
             rows.append(row)
             print(
                 f"{system} {generator} combined: overall={row['overall_fidelity']:.3f} "
-                f"structure={row['structural_ks_mean']:.3f} semantic={row['semantic_mean']:.3f}"
+                f"structure={row['structure_mean']:.3f} timing={row['timing_mean']:.3f} semantic={row['semantic_mean']:.3f}"
             )
 
     out_csv = ROOT / args.out_csv

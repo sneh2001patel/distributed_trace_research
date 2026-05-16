@@ -94,7 +94,7 @@ def _parse_reconstruction_metrics(log_path: Path):
         "total_nodes_evaluated": r"Total nodes evaluated:\s*([0-9]+)",
         "service_accuracy_pct": r"Service accuracy:\s*([0-9.]+)%",
         "op_accuracy_pct": r"Op accuracy:\s*([0-9.]+)%",
-        "duration_mae": r"Duration MAE:\s*([0-9.eE+-]+)",
+        "duration_mae": r"Duration MAE[^:]*:\s*([0-9.eE+-]+)",
         "edge_precision_pct": r"Edge precision:\s*([0-9.]+)%",
         "edge_recall_pct": r"Edge recall:\s*([0-9.]+)%",
         "edge_f1_pct": r"Edge F1:\s*([0-9.]+)%",

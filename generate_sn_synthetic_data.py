@@ -7,9 +7,10 @@ from pathlib import Path
 import torch
 from torch_geometric.data import Data, InMemoryDataset
 from torch_geometric.data.data import DataEdgeAttr
+from torch_geometric.utils import to_undirected
 
 from synthetic_graphs import generate_synthetic_graph
-from vae import GNNDecoder
+from vae import GNNDecoder, GraphEncoderVAE
 
 
 ROOT = Path(__file__).resolve().parent
@@ -22,19 +23,24 @@ class LoadDataset(InMemoryDataset):
         data, slices = torch.load(datapath, weights_only=False)
         self.data, self.slices = data, slices
 
+    def get(self, idx):
+        data = super().get(idx)
+        data.edge_index = to_undirected(data.edge_index)
+        return data
 
-def load_decoder_from_checkpoint(weights_path: str, device: torch.device):
+
+def load_encoder_decoder_from_checkpoint(weights_path: str, device: torch.device):
     checkpoint = torch.load(weights_path, map_location=device)
     cfg = checkpoint["config"]
-    state = checkpoint["decoder_state"]
+    dec_state = checkpoint["decoder_state"]
 
     max_nodes = cfg.get("max_nodes")
     if max_nodes is None:
-        max_nodes = int(state["pos_emb.weight"].shape[0])
+        max_nodes = int(dec_state["pos_emb.weight"].shape[0])
 
     head_hidden_dim = cfg.get("head_hidden_dim")
     if head_hidden_dim is None:
-        head_hidden_dim = int(state["service_head.0.weight"].shape[0])
+        head_hidden_dim = int(dec_state["service_head.0.weight"].shape[0])
 
     dec = GNNDecoder(
         latent_dim=cfg["latent_dim"],
@@ -47,9 +53,90 @@ def load_decoder_from_checkpoint(weights_path: str, device: torch.device):
         head_dropout=cfg.get("head_dropout", 0.1),
         enc_h_dropout=cfg.get("enc_h_dropout", 0.0),
     ).to(device)
-    dec.load_state_dict(state)
+    dec.load_state_dict(dec_state)
     dec.eval()
+
+    enc = GraphEncoderVAE(
+        n_services=cfg["num_services"],
+        n_ops=cfg["num_ops"],
+        duration_mean=cfg["duration_mean"],
+        duration_std=cfg["duration_std"],
+        hidden_ch=cfg.get("hidden_ch", 128),
+        embed_dim=cfg.get("embed_dim", 48),
+        latent_dim=cfg["latent_dim"],
+    ).to(device)
+    enc.load_state_dict(checkpoint["encoder_state"])
+    enc.eval()
+
+    return enc, dec, cfg
+
+
+# Keep old name as alias so synthetic_graphs.py callers still work
+def load_decoder_from_checkpoint(weights_path: str, device: torch.device):
+    _, dec, cfg = load_encoder_decoder_from_checkpoint(weights_path, device)
     return dec, cfg
+
+
+@torch.no_grad()
+def build_latent_pool(encoder, graphs, device: torch.device):
+    """
+    Encode every training graph and store per-graph posteriors, indexed by node
+    count for fast lookup.  Sampling z_n from a graph with a matching node count
+    preserves per-node service/op identity instead of averaging it away.
+    """
+    by_n = {}
+    for graph in graphs:
+        graph = graph.to(device)
+        batch = torch.zeros(graph.num_nodes, dtype=torch.long, device=device)
+        enc_out = encoder(graph.x, graph.edge_index, batch)
+        mu_g, logvar_g, _ = enc_out["graph"]
+        mu_n, logvar_n, _ = enc_out["node"]
+        entry = {
+            "mu_g":     mu_g.squeeze(0).cpu(),
+            "logvar_g": logvar_g.squeeze(0).cpu(),
+            "mu_n":     mu_n.cpu(),
+            "logvar_n": logvar_n.cpu(),
+        }
+        by_n.setdefault(graph.num_nodes, []).append(entry)
+    return by_n
+
+
+def sample_from_pool(
+    pool: dict,
+    target_n_nodes: int,
+    device: torch.device,
+    noise_scale: float = 1.0,
+):
+    """
+    Pick a training graph whose node count matches target_n_nodes (or the
+    closest available count), then sample z_g and z_n from its posterior.
+    This keeps each node's latent tied to a real service/op identity.
+    """
+    if target_n_nodes in pool:
+        entries = pool[target_n_nodes]
+    else:
+        closest = min(pool.keys(), key=lambda k: abs(k - target_n_nodes))
+        entries = pool[closest]
+
+    entry = random.choice(entries)
+    mu_g     = entry["mu_g"].to(device)
+    logvar_g = entry["logvar_g"].to(device)
+    mu_n     = entry["mu_n"].to(device)
+    logvar_n = entry["logvar_n"].to(device)
+
+    z_g = mu_g + noise_scale * (0.5 * logvar_g).exp() * torch.randn_like(mu_g)
+    z_n = mu_n + noise_scale * (0.5 * logvar_n).exp() * torch.randn_like(mu_n)
+
+    # resize z_n if the matched graph's node count differs from target
+    actual = z_n.size(0)
+    if actual > target_n_nodes:
+        z_n = z_n[:target_n_nodes]
+    elif actual < target_n_nodes:
+        extra = target_n_nodes - actual
+        idx = torch.randint(actual, (extra,), device=device)
+        z_n = torch.cat([z_n, z_n[idx] + 0.1 * torch.randn(extra, z_n.size(1), device=device)], dim=0)
+
+    return z_g, z_n
 
 
 def load_graphs(datapath: str):
@@ -109,17 +196,23 @@ def build_dataset(
     edge_dropout: float = 0.05,
     duration_noise: float = 0.02,
     threshold_jitter: float = 0.02,
+    latent_noise_scale: float = 1.0,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    decoder, cfg = load_decoder_from_checkpoint(weights_path, device)
+    encoder, decoder, cfg = load_encoder_decoder_from_checkpoint(weights_path, device)
 
     real_graphs = load_graphs(real_path)
+    print(f"Building latent pool from {len(real_graphs)} real graphs...")
+    pool = build_latent_pool(encoder, real_graphs, device)
+
     node_counts = sample_node_counts(real_graphs, target_count=target_count, seed=seed)
     edge_counts = sample_edge_counts(real_graphs, target_count=len(node_counts), seed=seed)
     valid_ops_by_service = build_valid_ops_by_service(real_graphs)
 
+    torch.manual_seed(seed)
     syn_graphs = []
     for n_nodes, target_edges in zip(node_counts, edge_counts):
+        z_g, z_n = sample_from_pool(pool, n_nodes, device, noise_scale=latent_noise_scale)
         graph = generate_synthetic_graph(
             decoder,
             num_nodes=n_nodes,
@@ -135,6 +228,8 @@ def build_dataset(
             threshold_jitter=threshold_jitter,
             target_edge_count=target_edges,
             valid_ops_by_service=valid_ops_by_service,
+            z_g=z_g,
+            z_n=z_n,
         )
         graph.y = torch.tensor(y_label, dtype=torch.long)
         syn_graphs.append(graph.cpu())

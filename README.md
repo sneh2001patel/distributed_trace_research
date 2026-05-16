@@ -79,4 +79,19 @@ Analysis of graph-level properties to compare real and synthetic trace structure
 Clustering-based distinguishability:
 Unsupervised clustering (e.g., K-means) over engineered feature representations to evaluate whether real and synthetic traces are well mixed or easily separable.
 
+Trace-signature similarity for RQ4:
+`./rq4_trace_signature_metrics.py` compares real and synthetic traces using an exact structural/semantic trace signature:
+
+- Node label: `(service, operation)`
+- Edge label: `(parent_service, parent_operation) -> (child_service, child_operation)`
+- Trace signature: set of node labels plus set of directed edge labels
+
+Run the default fixed-size hierarchical VAE comparison, which uses 1,244 real and 1,244 synthetic traces for both SN and TT:
+
+```bash
+../venv/bin/python rq4_trace_signature_metrics.py --preset fixed_size
+```
+
+The script reports nearest-neighbor Jaccard distance from each synthetic trace to the real training traces, duplicate and near-duplicate rates, service-operation pattern coverage, unique trace-structure distribution, exact train-match rate, and novelty rate. Outputs are written to `./classifier/rq4_trace_signature_metrics.csv` and `./classifier/rq4_trace_signature_metrics.md`.
+
 Together, these analyses provide complementary evidence that the synthetic datasets capture both the structural characteristics and behavioral variability of real distributed traces, while avoiding direct memorization. This similarity evaluation complements downstream task performance and provides a principled assessment of synthetic data quality.

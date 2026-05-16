@@ -43,9 +43,13 @@ def generate_synthetic_graph(
     threshold_jitter: float = 0.0,
     target_edge_count: int = None,
     valid_ops_by_service: dict[int, torch.Tensor] = None,
+    z_g: torch.Tensor = None,
+    z_n: torch.Tensor = None,
 ) -> Data:
-    z_g = torch.randn(decoder.latent_dim, device=device)
-    z_n = torch.randn(num_nodes, decoder.latent_dim, device=device)
+    if z_g is None:
+        z_g = torch.randn(decoder.latent_dim, device=device)
+    if z_n is None:
+        z_n = torch.randn(num_nodes, decoder.latent_dim, device=device)
     enc_h = torch.zeros(num_nodes, decoder.encoder_hidden_dim, device=device)
 
     service_logits, op_logits, duration_pred, edge_logits = decoder.decode_for_training(

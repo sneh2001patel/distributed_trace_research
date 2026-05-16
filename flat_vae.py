@@ -6,6 +6,7 @@ from torch_geometric.nn import GCNConv, global_mean_pool
 from vae import (
     _log_denormalize_duration,
     _log_normalize_duration,
+    compute_class_weights,
     edge_recon_loss,
     kl_loss,
     node_recon_loss,
@@ -121,8 +122,9 @@ class FlatGNNDecoder(nn.Module):
             nn.Dropout(p=head_dropout),
             nn.Linear(head_hidden_dim, n_service_classes),
         )
+        # input = h + service context (one-hot during training, softmax at inference)
         self.op_head = nn.Sequential(
-            nn.Linear(hidden_dim, head_hidden_dim),
+            nn.Linear(hidden_dim + n_service_classes, head_hidden_dim),
             nn.LayerNorm(head_hidden_dim),
             nn.GELU(),
             nn.Dropout(p=head_dropout),
@@ -151,7 +153,7 @@ class FlatGNNDecoder(nn.Module):
         mask = row < col
         return torch.stack([row[mask], col[mask]], dim=0)
 
-    def decode(self, z_graph: torch.Tensor, n_nodes: int):
+    def decode(self, z_graph: torch.Tensor, n_nodes: int, service_gt: torch.Tensor = None):
         device = z_graph.device
         self._ensure_pos_capacity(n_nodes, device)
         node_idx = torch.arange(n_nodes, device=device)
@@ -165,7 +167,13 @@ class FlatGNNDecoder(nn.Module):
             h = h + h_res
 
         service_logits = self.service_head(h)
-        op_logits = self.op_head(h)
+        if service_gt is not None:
+            service_context = F.one_hot(
+                service_gt.clamp(0, self.n_service_classes - 1), self.n_service_classes
+            ).float()
+        else:
+            service_context = torch.softmax(service_logits.detach(), dim=1)
+        op_logits = self.op_head(torch.cat([h, service_context], dim=1))
         duration_pred = self.duration_head(h)
 
         hi = h.unsqueeze(1).expand(-1, n_nodes, -1)
@@ -187,6 +195,8 @@ def flat_vae_loss(
     logvar,
     duration_mean,
     duration_std,
+    service_weight=None,
+    op_weight=None,
     beta: float = 0.02,
     edge_weight: float = 1.0,
     edge_neg_weight: float = 3.0,
@@ -199,6 +209,8 @@ def flat_vae_loss(
         duration_pred,
         duration_mean,
         duration_std,
+        service_weight=service_weight,
+        op_weight=op_weight,
         op_loss_scale=op_loss_scale,
     )
     if data.num_nodes < 2:

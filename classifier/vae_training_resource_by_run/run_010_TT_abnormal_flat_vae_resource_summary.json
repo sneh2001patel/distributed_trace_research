@@ -1,0 +1,15 @@
+{
+  "command": "/home/snehpatel/research/venv/bin/python3 ./train_flat_vae.py --data-path ./datasets/anomaly/TT/TT_abnormal.pt --out-weights ./weights/tt_abnormal_flat_vae_weights.pt",
+  "return_code": 0,
+  "wall_seconds": 338.491152,
+  "process_tree_cpu_seconds": 337.65,
+  "process_tree_avg_cpu_pct": 99.7515,
+  "process_tree_peak_rss_mb": 1602.222656,
+  "process_tree_peak_vms_mb": 12472.125,
+  "gpu_peak_mem_used_total_mb": 1140.0,
+  "process_tree_gpu_peak_mem_mb": 228.0,
+  "gpu_peak_util_pct": 29.0,
+  "sample_interval_seconds": 2.0,
+  "samples": 167,
+  "timeseries_csv": "/home/snehpatel/research/generate_graphs/classifier/vae_training_resource_by_run/run_010_TT_abnormal_flat_vae_resource_timeseries.csv"
+}

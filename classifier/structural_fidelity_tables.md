@@ -1,31 +1,586 @@
 # Structural Fidelity Comparison
 
-Scores are similarities where higher is better. KS similarity is `1 - KS statistic`. Graph MMD similarity is `exp(-MMD)` over graph-level statistics.
+All scores are similarities — higher is better.
+
+- **KS sim** = `1 − KS statistic` (0 = maximally different distributions, 1 = identical)
+- **MMD sim** = `exp(−MMD)` over 11 graph-level features (node/edge counts, density, degree stats, duration stats, service/op counts)
+- **JS sim** = `1 − Jensen-Shannon divergence` over discrete label distributions
+- **Valid** = fraction of synthetic (service, op) pairs that appear in the real data
+- **Structure Mean** = mean of 7 topology metrics (6 KS sims + MMD sim)
+- **Duration Mean** = mean of 2 duration KS sims (per-graph mean duration, all node durations)
+- **Semantic Mean** = mean of 4 label metrics (Svc JS, Op JS, SvcOp JS, Valid)
+- **Overall** = mean(Structure Mean, Duration Mean, Semantic Mean) — three equal groups
 
 ## TT
 
-| Generator | Class | Overall | Structure | Graph MMD Sim | Node KS Sim | Edge KS Sim | Density KS Sim | Degree KS Sim | Semantic | Valid Svc-Op | Duration KS Sim |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| empirical | normal | 0.774 | 0.537 | 0.687 | 0.977 | 0.634 | 0.652 | 0.287 | 0.926 | 0.979 | 0.990 |
-| empirical | abnormal | 0.726 | 0.458 | 0.667 | 0.943 | 0.514 | 0.460 | 0.561 | 0.847 | 0.926 | 0.974 |
-| empirical | combined | 0.766 | 0.516 | 0.711 | 0.971 | 0.647 | 0.632 | 0.373 | 0.905 | 0.966 | 0.988 |
-| flat_vae | normal | 0.611 | 0.685 | 0.864 | 0.976 | 0.727 | 0.757 | 0.388 | 0.419 | 0.422 | 0.671 |
-| flat_vae | abnormal | 0.575 | 0.678 | 0.816 | 0.972 | 0.736 | 0.796 | 0.395 | 0.460 | 0.369 | 0.720 |
-| flat_vae | combined | 0.609 | 0.704 | 0.859 | 0.975 | 0.785 | 0.778 | 0.417 | 0.432 | 0.409 | 0.740 |
-| hierarchical_vae | normal | 0.459 | 0.467 | 0.688 | 0.713 | 0.387 | 0.463 | 0.731 | 0.244 | 0.355 | 0.690 |
-| hierarchical_vae | abnormal | 0.514 | 0.470 | 0.672 | 0.991 | 0.442 | 0.202 | 0.552 | 0.413 | 0.396 | 0.775 |
-| hierarchical_vae | combined | 0.504 | 0.503 | 0.703 | 0.857 | 0.415 | 0.351 | 0.822 | 0.343 | 0.377 | 0.744 |
+<table>
+<thead>
+<tr>
+  <th rowspan="2">Generator</th>
+  <th rowspan="2">Class</th>
+  <th colspan="8">Structure</th>
+  <th colspan="3">Duration</th>
+  <th colspan="5">Semantic</th>
+  <th rowspan="2">Overall</th>
+</tr>
+<tr>
+  <th>Node KS</th>
+  <th>Edge KS</th>
+  <th>Density KS</th>
+  <th>AvgDeg KS</th>
+  <th>MaxDeg KS</th>
+  <th>AllDeg KS</th>
+  <th>MMD Sim</th>
+  <th>Mean</th>
+  <th>DurMean KS</th>
+  <th>AllDur KS</th>
+  <th>Mean</th>
+  <th>Svc JS</th>
+  <th>Op JS</th>
+  <th>SvcOp JS</th>
+  <th>Valid</th>
+  <th>Mean</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>random_sampling</td>
+  <td>normal</td>
+  <td>0.366</td>
+  <td>0.387</td>
+  <td>0.461</td>
+  <td>0.525</td>
+  <td>0.753</td>
+  <td>0.665</td>
+  <td>0.567</td>
+  <td><b>0.532</b></td>
+  <td>0.001</td>
+  <td>0.004</td>
+  <td><b>0.003</b></td>
+  <td>0.640</td>
+  <td>0.403</td>
+  <td>0.112</td>
+  <td>0.095</td>
+  <td><b>0.312</b></td>
+  <td><b>0.282</b></td>
+</tr>
+<tr>
+  <td>random_sampling</td>
+  <td>abnormal</td>
+  <td>0.567</td>
+  <td>0.625</td>
+  <td>0.626</td>
+  <td>0.555</td>
+  <td>0.691</td>
+  <td>0.716</td>
+  <td>0.644</td>
+  <td><b>0.632</b></td>
+  <td>0.002</td>
+  <td>0.028</td>
+  <td><b>0.015</b></td>
+  <td>0.669</td>
+  <td>0.447</td>
+  <td>0.116</td>
+  <td>0.096</td>
+  <td><b>0.332</b></td>
+  <td><b>0.326</b></td>
+</tr>
+<tr>
+  <td>random_sampling</td>
+  <td>combined</td>
+  <td>0.532</td>
+  <td>0.574</td>
+  <td>0.575</td>
+  <td>0.539</td>
+  <td>0.782</td>
+  <td>0.825</td>
+  <td>0.622</td>
+  <td><b>0.636</b></td>
+  <td>0.002</td>
+  <td>0.011</td>
+  <td><b>0.006</b></td>
+  <td>0.650</td>
+  <td>0.416</td>
+  <td>0.114</td>
+  <td>0.095</td>
+  <td><b>0.319</b></td>
+  <td><b>0.320</b></td>
+</tr>
+<tr>
+  <td>empirical</td>
+  <td>normal</td>
+  <td>0.977</td>
+  <td>0.634</td>
+  <td>0.652</td>
+  <td>0.000</td>
+  <td>0.673</td>
+  <td>0.287</td>
+  <td>0.687</td>
+  <td><b>0.559</b></td>
+  <td>0.732</td>
+  <td>0.990</td>
+  <td><b>0.861</b></td>
+  <td>0.934</td>
+  <td>0.896</td>
+  <td>0.895</td>
+  <td>0.979</td>
+  <td><b>0.926</b></td>
+  <td><b>0.782</b></td>
+</tr>
+<tr>
+  <td>empirical</td>
+  <td>abnormal</td>
+  <td>0.943</td>
+  <td>0.514</td>
+  <td>0.460</td>
+  <td>0.000</td>
+  <td>0.270</td>
+  <td>0.561</td>
+  <td>0.667</td>
+  <td><b>0.488</b></td>
+  <td>0.684</td>
+  <td>0.974</td>
+  <td><b>0.829</b></td>
+  <td>0.857</td>
+  <td>0.804</td>
+  <td>0.803</td>
+  <td>0.926</td>
+  <td><b>0.847</b></td>
+  <td><b>0.721</b></td>
+</tr>
+<tr>
+  <td>empirical</td>
+  <td>combined</td>
+  <td>0.971</td>
+  <td>0.647</td>
+  <td>0.632</td>
+  <td>0.000</td>
+  <td>0.472</td>
+  <td>0.373</td>
+  <td>0.711</td>
+  <td><b>0.544</b></td>
+  <td>0.710</td>
+  <td>0.988</td>
+  <td><b>0.849</b></td>
+  <td>0.914</td>
+  <td>0.869</td>
+  <td>0.869</td>
+  <td>0.966</td>
+  <td><b>0.905</b></td>
+  <td><b>0.766</b></td>
+</tr>
+<tr>
+  <td>flat_vae</td>
+  <td>normal</td>
+  <td>0.713</td>
+  <td>0.727</td>
+  <td>0.722</td>
+  <td>0.604</td>
+  <td>0.727</td>
+  <td>0.657</td>
+  <td>0.851</td>
+  <td><b>0.714</b></td>
+  <td>0.363</td>
+  <td>0.731</td>
+  <td><b>0.547</b></td>
+  <td>0.426</td>
+  <td>0.419</td>
+  <td>0.374</td>
+  <td>0.784</td>
+  <td><b>0.501</b></td>
+  <td><b>0.588</b></td>
+</tr>
+<tr>
+  <td>flat_vae</td>
+  <td>abnormal</td>
+  <td>0.991</td>
+  <td>0.718</td>
+  <td>0.769</td>
+  <td>0.499</td>
+  <td>0.682</td>
+  <td>0.407</td>
+  <td>0.817</td>
+  <td><b>0.698</b></td>
+  <td>0.177</td>
+  <td>0.697</td>
+  <td><b>0.437</b></td>
+  <td>0.638</td>
+  <td>0.611</td>
+  <td>0.590</td>
+  <td>0.825</td>
+  <td><b>0.666</b></td>
+  <td><b>0.600</b></td>
+</tr>
+<tr>
+  <td>flat_vae</td>
+  <td>combined</td>
+  <td>0.857</td>
+  <td>0.753</td>
+  <td>0.751</td>
+  <td>0.550</td>
+  <td>0.753</td>
+  <td>0.623</td>
+  <td>0.860</td>
+  <td><b>0.735</b></td>
+  <td>0.269</td>
+  <td>0.795</td>
+  <td><b>0.532</b></td>
+  <td>0.530</td>
+  <td>0.513</td>
+  <td>0.483</td>
+  <td>0.805</td>
+  <td><b>0.583</b></td>
+  <td><b>0.617</b></td>
+</tr>
+<tr>
+  <td>hierarchical_vae</td>
+  <td>normal</td>
+  <td>0.713</td>
+  <td>0.492</td>
+  <td>0.476</td>
+  <td>0.353</td>
+  <td>0.377</td>
+  <td>0.829</td>
+  <td>0.832</td>
+  <td><b>0.582</b></td>
+  <td>0.732</td>
+  <td>0.928</td>
+  <td><b>0.830</b></td>
+  <td>0.726</td>
+  <td>0.717</td>
+  <td>0.690</td>
+  <td>0.966</td>
+  <td><b>0.775</b></td>
+  <td><b>0.729</b></td>
+</tr>
+<tr>
+  <td>hierarchical_vae</td>
+  <td>abnormal</td>
+  <td>0.991</td>
+  <td>0.576</td>
+  <td>0.386</td>
+  <td>0.384</td>
+  <td>0.459</td>
+  <td>0.324</td>
+  <td>0.782</td>
+  <td><b>0.558</b></td>
+  <td>0.714</td>
+  <td>0.927</td>
+  <td><b>0.820</b></td>
+  <td>0.960</td>
+  <td>0.925</td>
+  <td>0.923</td>
+  <td>0.989</td>
+  <td><b>0.949</b></td>
+  <td><b>0.776</b></td>
+</tr>
+<tr>
+  <td>hierarchical_vae</td>
+  <td>combined</td>
+  <td>0.857</td>
+  <td>0.557</td>
+  <td>0.492</td>
+  <td>0.369</td>
+  <td>0.478</td>
+  <td>0.761</td>
+  <td>0.816</td>
+  <td><b>0.619</b></td>
+  <td>0.724</td>
+  <td>0.921</td>
+  <td><b>0.823</b></td>
+  <td>0.841</td>
+  <td>0.820</td>
+  <td>0.810</td>
+  <td>0.978</td>
+  <td><b>0.862</b></td>
+  <td><b>0.768</b></td>
+</tr>
+</tbody>
+</table>
 
 ## SN
 
-| Generator | Class | Overall | Structure | Graph MMD Sim | Node KS Sim | Edge KS Sim | Density KS Sim | Degree KS Sim | Semantic | Valid Svc-Op | Duration KS Sim |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| empirical | normal | 0.755 | 0.454 | 0.649 | 0.971 | 0.554 | 0.438 | 0.171 | 0.965 | 1.000 | 0.992 |
-| empirical | abnormal | 0.765 | 0.441 | 0.636 | 0.952 | 0.518 | 0.347 | 0.527 | 0.978 | 1.000 | 0.990 |
-| empirical | combined | 0.776 | 0.471 | 0.691 | 0.980 | 0.584 | 0.593 | 0.223 | 0.967 | 1.000 | 0.990 |
-| flat_vae | normal | 0.628 | 0.650 | 0.900 | 0.963 | 0.794 | 0.649 | 0.254 | 0.426 | 0.591 | 0.694 |
-| flat_vae | abnormal | 0.546 | 0.696 | 0.730 | 0.986 | 0.753 | 0.787 | 0.558 | 0.569 | 0.429 | 0.611 |
-| flat_vae | combined | 0.605 | 0.680 | 0.850 | 0.975 | 0.786 | 0.773 | 0.303 | 0.450 | 0.565 | 0.691 |
-| hierarchical_vae | normal | 0.356 | 0.261 | 0.648 | 0.977 | 0.232 | 0.000 | 0.076 | 0.262 | 0.355 | 0.188 |
-| hierarchical_vae | abnormal | 0.357 | 0.215 | 0.582 | 0.982 | 0.165 | 0.000 | 0.033 | 0.382 | 0.885 | 0.119 |
-| hierarchical_vae | combined | 0.383 | 0.291 | 0.658 | 0.982 | 0.358 | 0.000 | 0.080 | 0.292 | 0.440 | 0.177 |
+<table>
+<thead>
+<tr>
+  <th rowspan="2">Generator</th>
+  <th rowspan="2">Class</th>
+  <th colspan="8">Structure</th>
+  <th colspan="3">Duration</th>
+  <th colspan="5">Semantic</th>
+  <th rowspan="2">Overall</th>
+</tr>
+<tr>
+  <th>Node KS</th>
+  <th>Edge KS</th>
+  <th>Density KS</th>
+  <th>AvgDeg KS</th>
+  <th>MaxDeg KS</th>
+  <th>AllDeg KS</th>
+  <th>MMD Sim</th>
+  <th>Mean</th>
+  <th>DurMean KS</th>
+  <th>AllDur KS</th>
+  <th>Mean</th>
+  <th>Svc JS</th>
+  <th>Op JS</th>
+  <th>SvcOp JS</th>
+  <th>Valid</th>
+  <th>Mean</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>random_sampling</td>
+  <td>normal</td>
+  <td>0.144</td>
+  <td>0.148</td>
+  <td>0.243</td>
+  <td>0.514</td>
+  <td>0.742</td>
+  <td>0.516</td>
+  <td>0.543</td>
+  <td><b>0.407</b></td>
+  <td>0.000</td>
+  <td>0.003</td>
+  <td><b>0.001</b></td>
+  <td>0.695</td>
+  <td>0.708</td>
+  <td>0.104</td>
+  <td>0.083</td>
+  <td><b>0.397</b></td>
+  <td><b>0.269</b></td>
+</tr>
+<tr>
+  <td>random_sampling</td>
+  <td>abnormal</td>
+  <td>0.463</td>
+  <td>0.499</td>
+  <td>0.487</td>
+  <td>0.537</td>
+  <td>0.669</td>
+  <td>0.720</td>
+  <td>0.731</td>
+  <td><b>0.587</b></td>
+  <td>0.002</td>
+  <td>0.102</td>
+  <td><b>0.052</b></td>
+  <td>0.541</td>
+  <td>0.787</td>
+  <td>0.112</td>
+  <td>0.087</td>
+  <td><b>0.382</b></td>
+  <td><b>0.340</b></td>
+</tr>
+<tr>
+  <td>random_sampling</td>
+  <td>combined</td>
+  <td>0.465</td>
+  <td>0.478</td>
+  <td>0.491</td>
+  <td>0.526</td>
+  <td>0.706</td>
+  <td>0.633</td>
+  <td>0.690</td>
+  <td><b>0.570</b></td>
+  <td>0.005</td>
+  <td>0.012</td>
+  <td><b>0.009</b></td>
+  <td>0.679</td>
+  <td>0.750</td>
+  <td>0.106</td>
+  <td>0.083</td>
+  <td><b>0.404</b></td>
+  <td><b>0.328</b></td>
+</tr>
+<tr>
+  <td>empirical</td>
+  <td>normal</td>
+  <td>0.971</td>
+  <td>0.554</td>
+  <td>0.438</td>
+  <td>0.000</td>
+  <td>0.592</td>
+  <td>0.171</td>
+  <td>0.649</td>
+  <td><b>0.482</b></td>
+  <td>0.716</td>
+  <td>0.992</td>
+  <td><b>0.854</b></td>
+  <td>0.968</td>
+  <td>0.947</td>
+  <td>0.947</td>
+  <td>1.000</td>
+  <td><b>0.965</b></td>
+  <td><b>0.767</b></td>
+</tr>
+<tr>
+  <td>empirical</td>
+  <td>abnormal</td>
+  <td>0.952</td>
+  <td>0.518</td>
+  <td>0.347</td>
+  <td>0.000</td>
+  <td>0.300</td>
+  <td>0.527</td>
+  <td>0.636</td>
+  <td><b>0.469</b></td>
+  <td>0.782</td>
+  <td>0.990</td>
+  <td><b>0.886</b></td>
+  <td>0.991</td>
+  <td>0.961</td>
+  <td>0.961</td>
+  <td>1.000</td>
+  <td><b>0.978</b></td>
+  <td><b>0.778</b></td>
+</tr>
+<tr>
+  <td>empirical</td>
+  <td>combined</td>
+  <td>0.980</td>
+  <td>0.584</td>
+  <td>0.593</td>
+  <td>0.000</td>
+  <td>0.446</td>
+  <td>0.223</td>
+  <td>0.691</td>
+  <td><b>0.503</b></td>
+  <td>0.760</td>
+  <td>0.990</td>
+  <td><b>0.875</b></td>
+  <td>0.966</td>
+  <td>0.950</td>
+  <td>0.950</td>
+  <td>1.000</td>
+  <td><b>0.967</b></td>
+  <td><b>0.781</b></td>
+</tr>
+<tr>
+  <td>flat_vae</td>
+  <td>normal</td>
+  <td>0.721</td>
+  <td>0.716</td>
+  <td>0.825</td>
+  <td>0.555</td>
+  <td>0.721</td>
+  <td>0.580</td>
+  <td>0.911</td>
+  <td><b>0.718</b></td>
+  <td>0.536</td>
+  <td>0.827</td>
+  <td><b>0.682</b></td>
+  <td>0.533</td>
+  <td>0.325</td>
+  <td>0.325</td>
+  <td>1.000</td>
+  <td><b>0.546</b></td>
+  <td><b>0.649</b></td>
+</tr>
+<tr>
+  <td>flat_vae</td>
+  <td>abnormal</td>
+  <td>0.982</td>
+  <td>0.738</td>
+  <td>0.789</td>
+  <td>0.400</td>
+  <td>0.677</td>
+  <td>0.562</td>
+  <td>0.735</td>
+  <td><b>0.698</b></td>
+  <td>0.134</td>
+  <td>0.629</td>
+  <td><b>0.381</b></td>
+  <td>0.767</td>
+  <td>0.656</td>
+  <td>0.656</td>
+  <td>1.000</td>
+  <td><b>0.769</b></td>
+  <td><b>0.616</b></td>
+</tr>
+<tr>
+  <td>flat_vae</td>
+  <td>combined</td>
+  <td>0.858</td>
+  <td>0.736</td>
+  <td>0.828</td>
+  <td>0.478</td>
+  <td>0.885</td>
+  <td>0.541</td>
+  <td>0.858</td>
+  <td><b>0.740</b></td>
+  <td>0.392</td>
+  <td>0.745</td>
+  <td><b>0.569</b></td>
+  <td>0.574</td>
+  <td>0.405</td>
+  <td>0.405</td>
+  <td>1.000</td>
+  <td><b>0.596</b></td>
+  <td><b>0.635</b></td>
+</tr>
+<tr>
+  <td>hierarchical_vae</td>
+  <td>normal</td>
+  <td>0.977</td>
+  <td>0.778</td>
+  <td>0.724</td>
+  <td>0.554</td>
+  <td>0.822</td>
+  <td>0.941</td>
+  <td>0.950</td>
+  <td><b>0.821</b></td>
+  <td>0.829</td>
+  <td>0.872</td>
+  <td><b>0.851</b></td>
+  <td>0.916</td>
+  <td>0.788</td>
+  <td>0.788</td>
+  <td>1.000</td>
+  <td><b>0.873</b></td>
+  <td><b>0.848</b></td>
+</tr>
+<tr>
+  <td>hierarchical_vae</td>
+  <td>abnormal</td>
+  <td>0.982</td>
+  <td>0.573</td>
+  <td>0.450</td>
+  <td>0.274</td>
+  <td>0.353</td>
+  <td>0.652</td>
+  <td>0.836</td>
+  <td><b>0.589</b></td>
+  <td>0.927</td>
+  <td>0.960</td>
+  <td><b>0.944</b></td>
+  <td>0.975</td>
+  <td>0.955</td>
+  <td>0.955</td>
+  <td>1.000</td>
+  <td><b>0.971</b></td>
+  <td><b>0.835</b></td>
+</tr>
+<tr>
+  <td>hierarchical_vae</td>
+  <td>combined</td>
+  <td>0.982</td>
+  <td>0.766</td>
+  <td>0.615</td>
+  <td>0.414</td>
+  <td>0.588</td>
+  <td>0.914</td>
+  <td>0.925</td>
+  <td><b>0.743</b></td>
+  <td>0.886</td>
+  <td>0.890</td>
+  <td><b>0.888</b></td>
+  <td>0.925</td>
+  <td>0.818</td>
+  <td>0.818</td>
+  <td>1.000</td>
+  <td><b>0.890</b></td>
+  <td><b>0.841</b></td>
+</tr>
+</tbody>
+</table>

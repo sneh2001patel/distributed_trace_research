@@ -26,17 +26,24 @@ class LoadDataset(InMemoryDataset):
 class RandomSamplingTraceModel:
     node_count_min: int
     node_count_max: int
+    node_counts_empirical: list
     edge_count_min: int
     edge_count_max: int
+    edge_counts_empirical: list
     feature_min: torch.Tensor
     feature_max: torch.Tensor
+    feature_values: torch.Tensor
     integer_feature_indices: tuple[int, ...] = (0, 1)
+    duration_feature_index: int = 2
+    duration_quantile_clip: float = 0.99
 
     @classmethod
     def fit(
         cls,
         graphs: Sequence[Data],
         integer_feature_indices: Sequence[int] = (0, 1),
+        duration_feature_index: int = 2,
+        duration_quantile_clip: float = 0.99,
     ) -> "RandomSamplingTraceModel":
         if not graphs:
             raise ValueError("Cannot fit random sampling model on an empty dataset.")
@@ -48,42 +55,70 @@ class RandomSamplingTraceModel:
         return cls(
             node_count_min=min(node_counts),
             node_count_max=max(node_counts),
+            node_counts_empirical=node_counts,
             edge_count_min=min(edge_counts),
             edge_count_max=max(edge_counts),
+            edge_counts_empirical=edge_counts,
             feature_min=xs.min(dim=0).values,
             feature_max=xs.max(dim=0).values,
+            feature_values=xs,
             integer_feature_indices=tuple(int(i) for i in integer_feature_indices),
+            duration_feature_index=duration_feature_index,
+            duration_quantile_clip=duration_quantile_clip,
         )
 
     def sample_graph(self, y_label: int, rng: random.Random) -> Data:
-        n_nodes = rng.randint(self.node_count_min, self.node_count_max)
+        n_nodes = rng.choice(self.node_counts_empirical)
         x = self._sample_features(n_nodes)
         edge_index = self._sample_edges(n_nodes, rng)
         return Data(x=x, edge_index=edge_index, y=torch.tensor([y_label], dtype=torch.long))
 
     def _sample_features(self, n_nodes: int) -> torch.Tensor:
         lower = self.feature_min.float()
-        upper = self.feature_max.float()
-        span = torch.clamp(upper - lower, min=0.0)
-        x = lower + torch.rand((n_nodes, lower.numel())) * span
+        n_features = lower.numel()
+        x = torch.empty((n_nodes, n_features), dtype=torch.float)
+        integer_indices = set(self.integer_feature_indices)
 
-        for idx in self.integer_feature_indices:
-            if idx < 0 or idx >= lower.numel():
-                continue
-            lo = int(torch.floor(lower[idx]).item())
-            hi = int(torch.ceil(upper[idx]).item())
-            if hi <= lo:
-                x[:, idx] = lo
+        for idx in range(n_features):
+            if idx in integer_indices:
+                x[:, idx] = self._sample_integer_feature(idx, n_nodes)
+            elif idx == self.duration_feature_index:
+                x[:, idx] = self._sample_duration_feature(idx, n_nodes)
             else:
-                x[:, idx] = torch.randint(lo, hi + 1, (n_nodes,), dtype=torch.float)
+                x[:, idx] = self._sample_empirical_feature(idx, n_nodes)
         return x
+
+    def _sample_integer_feature(self, idx: int, n_nodes: int) -> torch.Tensor:
+        lower = self.feature_min.float()
+        upper = self.feature_max.float()
+        if idx < 0 or idx >= lower.numel():
+            return torch.zeros(n_nodes, dtype=torch.float)
+        lo = int(torch.floor(lower[idx]).item())
+        hi = int(torch.ceil(upper[idx]).item())
+        if hi <= lo:
+            return torch.full((n_nodes,), float(lo), dtype=torch.float)
+        return torch.randint(lo, hi + 1, (n_nodes,), dtype=torch.float)
+
+    def _sample_empirical_feature(self, idx: int, n_nodes: int) -> torch.Tensor:
+        values = self.feature_values[:, idx].float()
+        sample_idx = torch.randint(0, values.numel(), (n_nodes,), dtype=torch.long)
+        return values[sample_idx]
+
+    def _sample_duration_feature(self, idx: int, n_nodes: int) -> torch.Tensor:
+        values = torch.clamp(self.feature_values[:, idx].float(), min=0.0)
+        log_values = torch.log1p(values)
+        if 0.0 < self.duration_quantile_clip < 1.0:
+            upper = torch.quantile(log_values, self.duration_quantile_clip)
+            log_values = torch.clamp(log_values, max=upper)
+        sample_idx = torch.randint(0, log_values.numel(), (n_nodes,), dtype=torch.long)
+        return torch.expm1(log_values[sample_idx]).clamp(min=0.0)
 
     def _sample_edges(self, n_nodes: int, rng: random.Random) -> torch.Tensor:
         if n_nodes <= 1:
             return torch.empty((2, 0), dtype=torch.long)
 
         max_possible_edges = n_nodes * (n_nodes - 1)
-        edge_count = rng.randint(self.edge_count_min, self.edge_count_max)
+        edge_count = rng.choice(self.edge_counts_empirical)
         edge_count = min(max(edge_count, 0), max_possible_edges)
         if edge_count == 0:
             return torch.empty((2, 0), dtype=torch.long)
@@ -106,6 +141,10 @@ class RandomSamplingTraceModel:
             "feature_min": [float(v) for v in self.feature_min.tolist()],
             "feature_max": [float(v) for v in self.feature_max.tolist()],
             "integer_feature_indices": list(self.integer_feature_indices),
+            "continuous_feature_sampling": "empirical",
+            "duration_feature_index": self.duration_feature_index,
+            "duration_sampling": "empirical_log1p_quantile_clipped",
+            "duration_quantile_clip": self.duration_quantile_clip,
         }
 
 
@@ -128,6 +167,8 @@ def build_random_sampling_dataset(
     target_count: int = None,
     seed: int = 42,
     integer_feature_indices: Sequence[int] = (0, 1),
+    duration_feature_index: int = 2,
+    duration_quantile_clip: float = 0.99,
 ) -> dict:
     rng = random.Random(seed)
     torch.manual_seed(seed)
@@ -136,6 +177,8 @@ def build_random_sampling_dataset(
     model = RandomSamplingTraceModel.fit(
         real_graphs,
         integer_feature_indices=integer_feature_indices,
+        duration_feature_index=duration_feature_index,
+        duration_quantile_clip=duration_quantile_clip,
     )
     n_graphs = target_count or len(real_graphs)
     synthetic = [model.sample_graph(y_label=y_label, rng=rng) for _ in range(n_graphs)]
@@ -210,6 +253,18 @@ def main():
         default=[0, 1],
         help="Feature columns sampled as integer IDs. Defaults to service_id and operation_id.",
     )
+    parser.add_argument(
+        "--duration-feature-index",
+        type=int,
+        default=2,
+        help="Feature column containing duration. Defaults to column 2.",
+    )
+    parser.add_argument(
+        "--duration-quantile-clip",
+        type=float,
+        default=0.99,
+        help="Upper quantile used to clip log1p(duration) before empirical sampling.",
+    )
     args = parser.parse_args()
 
     if args.system is None:
@@ -224,6 +279,8 @@ def main():
             target_count=args.target_count,
             seed=args.seed,
             integer_feature_indices=args.integer_feature_indices,
+            duration_feature_index=args.duration_feature_index,
+            duration_quantile_clip=args.duration_quantile_clip,
         )
         print(json.dumps(summary, indent=2))
         return
@@ -246,6 +303,8 @@ def main():
                 target_count=args.target_count,
                 seed=args.seed,
                 integer_feature_indices=args.integer_feature_indices,
+                duration_feature_index=args.duration_feature_index,
+                duration_quantile_clip=args.duration_quantile_clip,
             )
 
     summary_path = ROOT / "datasets" / "baselines" / "random_sampling_summary.json"
