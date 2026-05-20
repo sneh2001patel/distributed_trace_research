@@ -1,97 +1,192 @@
 # Hierarchical Generation of Synthetic Distributed Traces for Downstream Learning
 
-Authors: Sneh Patel, Yuvraj Seghal, Mahsa Panahandeh, Naser Ezzati-Jivan, Francois Tetreau
+Authors: Sneh Patel, Yuvraj Sehgal, Mahsa Panahandeh, Naser Ezzati-Jivan, Francois Tetreault
 
 ## Overview
 
-Modern microservice-based systems generate large volumes of distributed execution traces, which are valuable for monitoring, diagnosis, and learning-based analysis. However, real traces are often sensitive, costly to collect, and limited in diversity.
+Modern microservice systems generate distributed traces that are useful for diagnosis, monitoring, and learning-based analysis. Real traces can be sensitive, expensive to collect, and limited in coverage, so this project studies synthetic trace generation for downstream anomaly detection.
 
-This project proposes a hierarchical generative framework for synthesizing realistic distributed traces that preserve both:
+The current experiment compares three synthetic-data generators:
 
-- Global structure (trace-level and graph-level properties), and
+- Hierarchical VAE: a graph-level and node-level variational model that learns trace structure, span attributes, and dependencies.
+- Flat VAE: a one-latent graph VAE baseline that generates an entire trace from a single latent representation.
+- Empirical/random sampling: a non-learning baseline that samples graph sizes, edge counts, service IDs, operation IDs, and durations from empirical real-data ranges/distributions.
 
-- Local semantics (span- and event-level attributes).
+The downstream task is normal-vs-abnormal anomaly detection for the SocialNetwork (SN) and TrainTicket (TT) trace datasets. Classifiers are trained with different real/synthetic mixtures and evaluated on held-out real traces.
 
-The generated synthetic traces are evaluated not only for statistical similarity to real traces, but also for utility in downstream learning tasks, such as classification and prediction, using train-on-synthetic-test-on-real (TSTR) evaluation
+Pretrained VAE weights are already included under `./weights/`, and generated synthetic datasets are already present under `./datasets/anomaly/` and `./datasets/baselines/`. If you do not need to retrain or regenerate the VAEs, skip directly to the classifier commands.
 
-## Real datasets
+## Real Datasets
 
-The real distributed trace data used in this project was obtained from the following public dataset:
+The real distributed trace data comes from the public Zenodo dataset:
 
-- Zenodo Dataset: https://zenodo.org/records/7615394
+- https://zenodo.org/records/7615394
 
-This dataset contains real-world distributed traces collected from microservice-based benchmarks and serves as the foundation for all training and evaluation in this work.
+Raw traces are converted into graph-structured datasets, where each trace is a graph and each node stores span-level attributes such as service, operation, and duration.
 
-After downloading the raw traces, they are preprocessed and converted into graph-structured representations suitable for hierarchical generative modeling. The trace-to-graph conversion is performed using the following script `./build_trace_graphs.py`
+Build the base graph datasets with:
 
-This preprocessing step transforms each distributed trace into a graph where nodes and edges encode span-level structure and attributes, enabling learning over both global trace structure and local execution semantics.
+```bash
+python build_trace_graphs.py
+python build_anomaly_trace_graphs.py
+```
 
-## Encoder-Decoder Architecture
+The anomaly detection scripts expect datasets under:
 
-The hierarchical encoder–decoder models used in this work can be trained using the following scripts:
+- `./datasets/anomaly/SN/SN_normal.pt`
+- `./datasets/anomaly/SN/SN_abnormal.pt`
+- `./datasets/anomaly/TT/TT_normal.pt`
+- `./datasets/anomaly/TT/TT_abnormal.pt`
 
-- `./train_tt_data.py` — training on the TrainTicket (TT) benchmark
+## Hierarchical VAE
 
-- `./train_sn_data.py` — training on the SocialNetwork (SN) benchmark
+The hierarchical VAE is the main generator. It separates trace-level structure from node-level span behavior, allowing the decoder to generate graph topology and node attributes for normal and abnormal traces.
 
-These scripts train the encoder–decoder architecture to learn both global trace structure and node-level attributes, enabling the decoder to generate synthetic graph-structured traces that resemble real distributed executions.
+Train the hierarchical VAEs:
 
-During training, the learned model parameters are automatically saved to the `weights/` directory. These saved weights are later used during sampling to generate synthetic traces for evaluation and downstream learning tasks.
+```bash
+python train_sn_normal_data.py
+python train_sn_abnormal_data.py
+python train_tt_normal_data.py
+python train_tt_abnormal_data.py
+```
 
-## Synthetic Datasets Generation
+These commands save weights to:
 
-After training the hierarchical encoder–decoder models, synthetic distributed trace datasets are generated using the following script `./build_synthetic_datasets.py`
-The datasets are saved in the directory `./datasets/`. Two different types of datasets where generated fixed-size and variable-size. Fixed-size indicated that the dataset was made to mimic the real dataset, where the variable-size dataset had liberty.
-The resulting synthetic datasets are saved in the same standardized formats used by the real traces, enabling them to be directly substituted into downstream learning pipelines without modification.
+- `./weights/sn_normal_vae_weights.pt`
+- `./weights/sn_abnormal_vae_weights.pt`
+- `./weights/tt_normal_vae_weights.pt`
+- `./weights/tt_abnormal_vae_weights.pt`
 
-### Random Sampling Baseline
+Generate hierarchical VAE synthetic datasets:
 
-A non-learning random sampling baseline is available in `./random_sampling_baselines.py`. It fits only lower and upper bounds from the real SN and TT graph datasets, then uniformly samples graph sizes, edge counts, service IDs, operation IDs, and durations within those bounds.
+```bash
+python generate_sn_synthetic_data.py --mode both
+python generate_tt_synthetic_data.py --mode both
+```
 
-Generate all SN and TT normal/abnormal random-sampling baselines with:
+Outputs are written to:
+
+- `./datasets/anomaly/SN/SN_normal_synthetic.pt`
+- `./datasets/anomaly/SN/SN_abnormal_synthetic.pt`
+- `./datasets/anomaly/TT/TT_normal_synthetic.pt`
+- `./datasets/anomaly/TT/TT_abnormal_synthetic.pt`
+
+## Flat VAE Baseline
+
+The flat VAE is a simpler one-latent baseline. It does not explicitly separate graph-level and node-level latent variables, so it provides a comparison point for the hierarchical design.
+
+Train flat VAEs:
+
+```bash
+python train_flat_vae.py --data-path ./datasets/anomaly/SN/SN_normal.pt --out-weights ./weights/sn_normal_flat_vae_weights.pt
+python train_flat_vae.py --data-path ./datasets/anomaly/SN/SN_abnormal.pt --out-weights ./weights/sn_abnormal_flat_vae_weights.pt
+python train_flat_vae.py --data-path ./datasets/anomaly/TT/TT_normal.pt --out-weights ./weights/tt_normal_flat_vae_weights.pt
+python train_flat_vae.py --data-path ./datasets/anomaly/TT/TT_abnormal.pt --out-weights ./weights/tt_abnormal_flat_vae_weights.pt
+```
+
+Generate flat VAE synthetic datasets:
+
+```bash
+python generate_flat_synthetic_data.py --system both --mode both
+```
+
+Outputs are written to `./datasets/baselines/*_flat_vae_synthetic.pt`.
+
+## Empirical Random Sampling Baseline
+
+The empirical/random sampling baseline is non-learning. It fits simple empirical properties from the real graph datasets, then samples synthetic graphs from those properties.
+
+Generate all SN and TT normal/abnormal random-sampling baselines:
 
 ```bash
 python random_sampling_baselines.py --system both --mode both --seed 42
 ```
 
-The generated files are written to `./datasets/baselines/*_random_sampling.pt` and can be used in the classifier and structural fidelity comparison scripts with `--generators random_sampling`.
+Outputs are written to `./datasets/baselines/*_random_sampling.pt`.
 
-## Downstream Task: Classification
-
-The generated synthetic datasets are subsequently used to evaluate their utility in downstream learning tasks. In particular, we train predictive models exclusively on synthetic data and evaluate them on held-out real data, following a train-on-synthetic-test-on-real (TSTR) evaluation protocol.
-
-These downstream experiments assess whether the synthetic traces capture sufficient behavioral fidelity to support learning tasks such as classification and prediction, and serve as a key measure of synthetic data quality in this work.
-
-The `./classifier/` directory has the model, training method used, and the evaluation done, along with the weights.
-
-## Similarity and Fidelity Evaluation
-
-To assess how closely the generated synthetic datasets resemble the real distributed traces, we perform a comprehensive similarity and fidelity analysis across multiple dimensions.
-
-The evaluation includes:
-
-Statistical similarity:
-Distributional comparisons of key attributes (e.g., service identifiers, operation identifiers, durations) between real and synthetic traces using metrics such as Kolmogorov–Smirnov (KS) statistics.
-
-Structural similarity:
-Analysis of graph-level properties to compare real and synthetic trace structures, ensuring that generated graphs preserve essential execution patterns and dependencies.
-
-Clustering-based distinguishability:
-Unsupervised clustering (e.g., K-means) over engineered feature representations to evaluate whether real and synthetic traces are well mixed or easily separable.
-
-Trace-signature similarity for RQ4:
-`./rq4_trace_signature_metrics.py` compares real and synthetic traces using an exact structural/semantic trace signature:
-
-- Node label: `(service, operation)`
-- Edge label: `(parent_service, parent_operation) -> (child_service, child_operation)`
-- Trace signature: set of node labels plus set of directed edge labels
-
-Run the default fixed-size hierarchical VAE comparison, which uses 1,244 real and 1,244 synthetic traces for both SN and TT:
+There is also a configurable empirical baseline script for one dataset at a time:
 
 ```bash
-../venv/bin/python rq4_trace_signature_metrics.py --preset fixed_size
+python empirical_baselines.py \
+  --real-path ./datasets/anomaly/SN/SN_normal.pt \
+  --out-path ./datasets/baselines/SN_normal_empirical_random_tree.pt \
+  --y-label 0 \
+  --structure random_tree
 ```
 
-The script reports nearest-neighbor Jaccard distance from each synthetic trace to the real training traces, duplicate and near-duplicate rates, service-operation pattern coverage, unique trace-structure distribution, exact train-match rate, and novelty rate. Outputs are written to `./classifier/rq4_trace_signature_metrics.csv` and `./classifier/rq4_trace_signature_metrics.md`.
+## Downstream Anomaly Detection
 
-Together, these analyses provide complementary evidence that the synthetic datasets capture both the structural characteristics and behavioral variability of real distributed traces, while avoiding direct memorization. This similarity evaluation complements downstream task performance and provides a principled assessment of synthetic data quality.
+The downstream classifier predicts normal vs. abnormal traces and evaluates on held-out real data. By default, the SN and TT classifier scripts use the hierarchical VAE synthetic datasets.
+
+Run a hierarchical VAE classifier test:
+
+```bash
+python classifier/train_sn_anomaly.py --real 0 --epochs 50
+python classifier/train_tt_anomaly.py --real 0 --epochs 120
+```
+
+`--real 0` means the classifier trains on synthetic traces only and tests on real held-out traces. To train with a real/synthetic mixture, pass a real-data percentage:
+
+```bash
+python classifier/train_sn_anomaly.py --real 10 --epochs 50
+python classifier/train_tt_anomaly.py --real 10 --epochs 120
+```
+
+To test a specific generator, pass the synthetic normal and abnormal paths:
+
+```bash
+python classifier/train_sn_anomaly.py \
+  --generator-name flat_vae \
+  --syn-normal-path ./datasets/baselines/SN_normal_flat_vae_synthetic.pt \
+  --syn-abnormal-path ./datasets/baselines/SN_abnormal_flat_vae_synthetic.pt \
+  --real 0
+
+python classifier/train_tt_anomaly.py \
+  --generator-name random_sampling \
+  --syn-normal-path ./datasets/baselines/TT_normal_random_sampling.pt \
+  --syn-abnormal-path ./datasets/baselines/TT_abnormal_random_sampling.pt \
+  --real 0
+```
+
+Classifier weights and result CSVs are saved under `./classifier/` unless another path is provided.
+
+## Full Baseline Comparison
+
+Run the ordered comparison across hierarchical VAE, flat VAE, and random sampling:
+
+```bash
+python run_baseline_comparison.py \
+  --systems SN TT \
+  --generators random_sampling flat_vae hierarchical_vae \
+  --real-values 0 10 30 50 70 100
+```
+
+This writes consolidated metrics to `./classifier/baseline_comparison_ordered_results.csv` and summary tables to `./classifier/baseline_comparison_ordered_tables.md`.
+
+To include the empirical baseline as well:
+
+```bash
+python run_baseline_comparison.py \
+  --systems SN TT \
+  --generators random_sampling empirical flat_vae hierarchical_vae \
+  --real-values 0 10 30 50 70 100
+```
+
+## Structural Fidelity Evaluation
+
+Structural fidelity scripts compare generated and real graph properties, including node counts, edge counts, density, and related graph statistics.
+
+Run structural fidelity evaluation:
+
+```bash
+python structural_fidelity.py --systems SN TT --generators random_sampling flat_vae hierarchical_vae
+```
+
+Include the empirical baseline when those datasets have been generated:
+
+```bash
+python structural_fidelity.py --systems SN TT --generators random_sampling empirical flat_vae hierarchical_vae
+```
+
+The active downstream experiment is anomaly detection with hierarchical VAE, flat VAE, and empirical/random sampling synthetic data.
