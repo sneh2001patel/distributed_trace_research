@@ -1,0 +1,494 @@
+START 2026-05-16T23:59:53-04:00
+Prepared 8 runs.
+
+[1/8] /dev/shm/icsme_sneh_gpu_rerun/.venv/bin/python ./classifier/train_tt_anomaly.py --generator-name hierarchical_vae --syn-normal-path ./datasets/anomaly/TT/TT_normal_synthetic.pt --syn-abnormal-path ./datasets/anomaly/TT/TT_abnormal_synthetic.pt --weights-path classifier/baseline_weights_directed_full_hierarchical/tt_hierarchical_vae_real0_classifier_weights.pt --results-csv /dev/shm/icsme_sneh_gpu_rerun/experiment_local/baseline_runs_4jleboy9/run_001_TT_hierarchical_vae_real0.csv --real 0.0
+Dataset summary: {'train_normal_synth': 3038, 'train_abnormal_synth': 2157, 'train_normal_real': 0, 'train_abnormal_real': 0, 'val_normal_synth': 760, 'val_abnormal_synth': 540, 'val_normal_real': 0, 'val_abnormal_real': 0, 'test_normal_real': 760, 'test_abnormal_real': 540, 'train_real_total': 0, 'train_synth_total': 5195, 'val_source': 'synthetic', 'min_nodes_filter': 3, 'train_total_after_filter': 5195, 'val_total_after_filter': 1300, 'test_total_after_filter': 1300, 'train_normal_real_after_filter': 3038, 'train_abnormal_real_after_filter': 2157, 'val_normal_real_after_filter': 760, 'val_abnormal_real_after_filter': 540, 'test_normal_real_after_filter': 760, 'test_abnormal_real_after_filter': 540}
+Training mix: real=0.0% synth=100.0%
+Epoch 001 | train 0.6931/0.540 | val 0.7030/0.522
+Epoch 002 | train 0.6691/0.587 | val 0.6132/0.687
+Epoch 003 | train 0.6332/0.642 | val 0.5873/0.645
+Epoch 004 | train 0.6112/0.666 | val 0.5614/0.742
+Epoch 005 | train 0.5933/0.686 | val 0.5397/0.745
+Epoch 006 | train 0.5808/0.695 | val 0.5686/0.670
+Epoch 007 | train 0.5726/0.704 | val 0.5231/0.755
+Epoch 008 | train 0.5588/0.718 | val 0.5045/0.748
+Epoch 009 | train 0.5491/0.725 | val 0.5792/0.726
+Epoch 010 | train 0.5518/0.722 | val 0.4940/0.750
+Epoch 011 | train 0.5366/0.732 | val 0.5068/0.750
+Epoch 012 | train 0.5335/0.727 | val 0.5158/0.741
+Epoch 013 | train 0.5283/0.735 | val 0.4791/0.752
+Epoch 014 | train 0.5205/0.745 | val 0.4978/0.754
+Epoch 015 | train 0.5247/0.738 | val 0.4707/0.765
+Epoch 016 | train 0.5201/0.745 | val 0.4686/0.775
+Epoch 017 | train 0.5162/0.751 | val 0.4772/0.750
+Epoch 018 | train 0.5150/0.743 | val 0.4545/0.784
+Epoch 019 | train 0.5055/0.749 | val 0.4639/0.772
+Epoch 020 | train 0.5047/0.750 | val 0.4563/0.789
+Epoch 021 | train 0.5037/0.756 | val 0.4525/0.795
+Epoch 022 | train 0.4990/0.754 | val 0.4689/0.769
+Epoch 023 | train 0.4885/0.760 | val 0.5017/0.756
+Epoch 024 | train 0.4860/0.762 | val 0.4456/0.796
+Epoch 025 | train 0.4856/0.761 | val 0.4446/0.776
+Epoch 026 | train 0.4875/0.757 | val 0.4432/0.769
+Epoch 027 | train 0.4818/0.763 | val 0.4508/0.779
+Epoch 028 | train 0.4768/0.764 | val 0.4255/0.805
+Epoch 029 | train 0.4763/0.760 | val 0.4207/0.800
+Epoch 030 | train 0.4696/0.766 | val 0.4336/0.798
+Epoch 031 | train 0.4709/0.768 | val 0.4156/0.807
+Epoch 032 | train 0.4623/0.776 | val 0.4203/0.795
+Epoch 033 | train 0.4623/0.773 | val 0.4363/0.785
+Epoch 034 | train 0.4602/0.781 | val 0.4056/0.797
+Epoch 035 | train 0.4565/0.778 | val 0.4149/0.798
+Epoch 036 | train 0.4649/0.773 | val 0.4351/0.803
+Epoch 037 | train 0.4574/0.781 | val 0.4384/0.782
+Epoch 038 | train 0.4533/0.782 | val 0.4075/0.804
+Epoch 039 | train 0.4602/0.776 | val 0.4168/0.811
+Epoch 040 | train 0.4489/0.783 | val 0.4241/0.800
+Epoch 041 | train 0.4502/0.784 | val 0.4027/0.803
+Epoch 042 | train 0.4477/0.779 | val 0.3957/0.805
+Epoch 043 | train 0.4415/0.792 | val 0.4377/0.783
+Epoch 044 | train 0.4462/0.787 | val 0.4243/0.812
+Epoch 045 | train 0.4404/0.784 | val 0.3780/0.824
+Epoch 046 | train 0.4407/0.784 | val 0.4447/0.797
+Epoch 047 | train 0.4416/0.784 | val 0.4056/0.803
+Epoch 048 | train 0.4438/0.784 | val 0.3904/0.819
+Epoch 049 | train 0.4402/0.790 | val 0.4020/0.818
+Epoch 050 | train 0.4387/0.793 | val 0.4783/0.776
+Test 1.1522/0.631
+Confusion Matrix (rows=true, cols=pred):
+tensor([[523, 237],
+        [243, 297]])
+Per-class PRF: Normal Precision=0.683 Recall=0.688 F1=0.685 | Abnormal Precision=0.556 Recall=0.550 F1=0.553
+Weighted Overall: Precision=0.630 Recall=0.631 F1=0.630
+Saved results row to /dev/shm/icsme_sneh_gpu_rerun/experiment_local/baseline_runs_4jleboy9/run_001_TT_hierarchical_vae_real0.csv
+
+[2/8] /dev/shm/icsme_sneh_gpu_rerun/.venv/bin/python ./classifier/train_sn_anomaly.py --generator-name hierarchical_vae --syn-normal-path ./datasets/anomaly/SN/SN_normal_synthetic.pt --syn-abnormal-path ./datasets/anomaly/SN/SN_abnormal_synthetic.pt --weights-path classifier/baseline_weights_directed_full_hierarchical/sn_hierarchical_vae_real0_classifier_weights.pt --results-csv /dev/shm/icsme_sneh_gpu_rerun/experiment_local/baseline_runs_4jleboy9/run_002_SN_hierarchical_vae_real0.csv --real 0.0
+Dataset summary: {'train_normal_synth': 3404, 'train_abnormal_synth': 5639, 'train_normal_real': 0, 'train_abnormal_real': 0, 'val_normal_synth': 851, 'val_abnormal_synth': 1410, 'val_normal_real': 0, 'val_abnormal_real': 0, 'test_normal_real': 851, 'test_abnormal_real': 1410, 'train_real_total': 0, 'train_synth_total': 9043, 'val_source': 'synthetic'}
+Training mix: real=0.0% synth=100.0%
+Epoch 001 | train 0.0515/0.988 | val 0.0234/0.993
+Epoch 002 | train 0.0186/0.994 | val 0.0161/0.996
+Epoch 003 | train 0.0166/0.995 | val 0.0137/0.996
+Epoch 004 | train 0.0134/0.996 | val 0.0271/0.994
+Epoch 005 | train 0.0129/0.996 | val 0.0164/0.995
+Epoch 006 | train 0.0113/0.996 | val 0.0188/0.996
+Epoch 007 | train 0.0093/0.997 | val 0.0151/0.996
+Epoch 008 | train 0.0102/0.997 | val 0.0197/0.994
+Epoch 009 | train 0.0083/0.997 | val 0.0167/0.992
+Epoch 010 | train 0.0074/0.998 | val 0.0331/0.993
+Epoch 011 | train 0.0080/0.997 | val 0.0141/0.994
+Epoch 012 | train 0.0052/0.998 | val 0.0227/0.995
+Epoch 013 | train 0.0065/0.998 | val 0.0173/0.996
+Epoch 014 | train 0.0061/0.999 | val 0.0184/0.996
+Epoch 015 | train 0.0057/0.998 | val 0.0115/0.996
+Epoch 016 | train 0.0064/0.998 | val 0.0147/0.996
+Epoch 017 | train 0.0071/0.998 | val 0.0151/0.995
+Epoch 018 | train 0.0048/0.999 | val 0.0187/0.996
+Epoch 019 | train 0.0085/0.997 | val 0.0119/0.996
+Epoch 020 | train 0.0050/0.998 | val 0.0133/0.996
+Epoch 021 | train 0.0086/0.997 | val 0.0186/0.996
+Epoch 022 | train 0.0038/0.999 | val 0.0175/0.996
+Epoch 023 | train 0.0053/0.998 | val 0.0158/0.996
+Epoch 024 | train 0.0044/0.999 | val 0.0209/0.996
+Epoch 025 | train 0.0060/0.998 | val 0.0212/0.996
+Epoch 026 | train 0.0061/0.998 | val 0.0125/0.996
+Epoch 027 | train 0.0037/0.999 | val 0.0283/0.994
+Epoch 028 | train 0.0043/0.999 | val 0.0165/0.993
+Epoch 029 | train 0.0050/0.998 | val 0.0129/0.997
+Epoch 030 | train 0.0042/0.998 | val 0.0149/0.996
+Epoch 031 | train 0.0046/0.999 | val 0.0123/0.996
+Epoch 032 | train 0.0024/0.999 | val 0.0132/0.996
+Epoch 033 | train 0.0042/0.999 | val 0.0096/0.997
+Epoch 034 | train 0.0059/0.998 | val 0.0106/0.997
+Epoch 035 | train 0.0025/0.999 | val 0.0070/0.997
+Epoch 036 | train 0.0056/0.998 | val 0.0195/0.995
+Epoch 037 | train 0.0049/0.999 | val 0.0160/0.996
+Epoch 038 | train 0.0049/0.998 | val 0.0109/0.996
+Epoch 039 | train 0.0036/0.999 | val 0.0176/0.996
+Epoch 040 | train 0.0028/0.999 | val 0.0135/0.997
+Epoch 041 | train 0.0038/0.999 | val 0.0238/0.993
+Epoch 042 | train 0.0042/0.999 | val 0.0081/0.996
+Epoch 043 | train 0.0057/0.998 | val 0.0109/0.995
+Epoch 044 | train 0.0042/0.999 | val 0.0088/0.997
+Epoch 045 | train 0.0023/0.999 | val 0.0129/0.996
+Epoch 046 | train 0.0027/0.999 | val 0.0122/0.996
+Epoch 047 | train 0.0045/0.998 | val 0.0105/0.998
+Epoch 048 | train 0.0030/0.999 | val 0.0119/0.997
+Epoch 049 | train 0.0045/0.999 | val 0.0129/0.997
+Epoch 050 | train 0.0038/0.999 | val 0.0176/0.996
+Test 6.0828/0.623
+Confusion Matrix (rows=true, cols=pred):
+tensor([[   0,  851],
+        [   1, 1409]])
+Per-class PRF: Normal Precision=0.000 Recall=0.000 F1=0.000 | Abnormal Precision=0.623 Recall=0.999 F1=0.768
+Weighted Overall: Precision=0.389 Recall=0.623 F1=0.479
+Saved results row to /dev/shm/icsme_sneh_gpu_rerun/experiment_local/baseline_runs_4jleboy9/run_002_SN_hierarchical_vae_real0.csv
+
+[3/8] /dev/shm/icsme_sneh_gpu_rerun/.venv/bin/python ./classifier/train_tt_anomaly.py --generator-name hierarchical_vae --syn-normal-path ./datasets/anomaly/TT/TT_normal_synthetic.pt --syn-abnormal-path ./datasets/anomaly/TT/TT_abnormal_synthetic.pt --weights-path classifier/baseline_weights_directed_full_hierarchical/tt_hierarchical_vae_real10_classifier_weights.pt --results-csv /dev/shm/icsme_sneh_gpu_rerun/experiment_local/baseline_runs_4jleboy9/run_003_TT_hierarchical_vae_real10.csv --real 10.0
+Dataset summary: {'train_normal_synth': 3038, 'train_abnormal_synth': 2157, 'train_normal_real': 337, 'train_abnormal_real': 240, 'val_normal_synth': 760, 'val_abnormal_synth': 540, 'val_normal_real': 84, 'val_abnormal_real': 60, 'test_normal_real': 760, 'test_abnormal_real': 540, 'train_real_total': 577, 'train_synth_total': 5195, 'val_source': 'mixed', 'min_nodes_filter': 3, 'train_total_after_filter': 5772, 'val_total_after_filter': 1444, 'test_total_after_filter': 1300, 'train_normal_real_after_filter': 3375, 'train_abnormal_real_after_filter': 2397, 'val_normal_real_after_filter': 844, 'val_abnormal_real_after_filter': 600, 'test_normal_real_after_filter': 760, 'test_abnormal_real_after_filter': 540}
+Training mix: real=10.0% synth=90.0%
+Epoch 001 | train 0.6945/0.537 | val 0.6898/0.456
+Epoch 002 | train 0.6705/0.586 | val 0.6247/0.659
+Epoch 003 | train 0.6383/0.644 | val 0.5870/0.726
+Epoch 004 | train 0.6141/0.683 | val 0.6208/0.608
+Epoch 005 | train 0.6018/0.695 | val 0.5702/0.738
+Epoch 006 | train 0.5999/0.702 | val 0.5639/0.732
+Epoch 007 | train 0.5947/0.705 | val 0.5596/0.697
+Epoch 008 | train 0.5856/0.703 | val 0.5644/0.725
+Epoch 009 | train 0.5837/0.707 | val 0.5589/0.720
+Epoch 010 | train 0.5740/0.709 | val 0.5502/0.737
+Epoch 011 | train 0.5713/0.717 | val 0.5285/0.738
+Epoch 012 | train 0.5617/0.723 | val 0.5190/0.750
+Epoch 013 | train 0.5645/0.723 | val 0.5292/0.744
+Epoch 014 | train 0.5564/0.729 | val 0.5495/0.722
+Epoch 015 | train 0.5531/0.727 | val 0.5499/0.751
+Epoch 016 | train 0.5548/0.722 | val 0.5155/0.755
+Epoch 017 | train 0.5476/0.730 | val 0.5170/0.755
+Epoch 018 | train 0.5519/0.734 | val 0.5267/0.741
+Epoch 019 | train 0.5436/0.736 | val 0.5192/0.762
+Epoch 020 | train 0.5439/0.736 | val 0.5071/0.768
+Epoch 021 | train 0.5457/0.737 | val 0.4988/0.762
+Epoch 022 | train 0.5369/0.737 | val 0.5093/0.749
+Epoch 023 | train 0.5389/0.740 | val 0.5378/0.715
+Epoch 024 | train 0.5366/0.737 | val 0.4894/0.761
+Epoch 025 | train 0.5299/0.743 | val 0.5106/0.740
+Epoch 026 | train 0.5326/0.742 | val 0.4815/0.769
+Epoch 027 | train 0.5254/0.748 | val 0.5005/0.749
+Epoch 028 | train 0.5226/0.747 | val 0.5018/0.747
+Epoch 029 | train 0.5245/0.745 | val 0.4903/0.761
+Epoch 030 | train 0.5146/0.755 | val 0.4907/0.767
+Epoch 031 | train 0.5149/0.755 | val 0.4876/0.761
+Epoch 032 | train 0.5131/0.753 | val 0.4650/0.786
+Epoch 033 | train 0.5095/0.752 | val 0.4751/0.775
+Epoch 034 | train 0.5089/0.753 | val 0.4883/0.760
+Epoch 035 | train 0.5046/0.754 | val 0.4744/0.778
+Epoch 036 | train 0.5132/0.754 | val 0.4866/0.774
+Epoch 037 | train 0.5049/0.757 | val 0.5073/0.760
+Epoch 038 | train 0.5048/0.756 | val 0.4724/0.780
+Epoch 039 | train 0.5021/0.757 | val 0.4654/0.774
+Epoch 040 | train 0.5001/0.757 | val 0.4597/0.776
+Epoch 041 | train 0.4989/0.757 | val 0.4651/0.772
+Epoch 042 | train 0.4927/0.764 | val 0.4643/0.780
+Epoch 043 | train 0.4924/0.761 | val 0.4595/0.784
+Epoch 044 | train 0.4913/0.763 | val 0.4603/0.785
+Epoch 045 | train 0.4934/0.763 | val 0.4622/0.774
+Epoch 046 | train 0.4875/0.765 | val 0.4503/0.786
+Epoch 047 | train 0.4913/0.766 | val 0.4442/0.798
+Epoch 048 | train 0.4942/0.762 | val 0.4746/0.767
+Epoch 049 | train 0.4860/0.770 | val 0.4504/0.801
+Epoch 050 | train 0.4863/0.773 | val 0.4437/0.803
+Test 0.7465/0.635
+Confusion Matrix (rows=true, cols=pred):
+tensor([[515, 245],
+        [229, 311]])
+Per-class PRF: Normal Precision=0.692 Recall=0.678 F1=0.685 | Abnormal Precision=0.559 Recall=0.576 F1=0.568
+Weighted Overall: Precision=0.637 Recall=0.635 F1=0.636
+Saved results row to /dev/shm/icsme_sneh_gpu_rerun/experiment_local/baseline_runs_4jleboy9/run_003_TT_hierarchical_vae_real10.csv
+
+[4/8] /dev/shm/icsme_sneh_gpu_rerun/.venv/bin/python ./classifier/train_sn_anomaly.py --generator-name hierarchical_vae --syn-normal-path ./datasets/anomaly/SN/SN_normal_synthetic.pt --syn-abnormal-path ./datasets/anomaly/SN/SN_abnormal_synthetic.pt --weights-path classifier/baseline_weights_directed_full_hierarchical/sn_hierarchical_vae_real10_classifier_weights.pt --results-csv /dev/shm/icsme_sneh_gpu_rerun/experiment_local/baseline_runs_4jleboy9/run_004_SN_hierarchical_vae_real10.csv --real 10.0
+Dataset summary: {'train_normal_synth': 3404, 'train_abnormal_synth': 5638, 'train_normal_real': 378, 'train_abnormal_real': 627, 'val_normal_synth': 851, 'val_abnormal_synth': 1410, 'val_normal_real': 95, 'val_abnormal_real': 156, 'test_normal_real': 851, 'test_abnormal_real': 1410, 'train_real_total': 1005, 'train_synth_total': 9042, 'val_source': 'mixed'}
+Training mix: real=10.0% synth=90.0%
+Epoch 001 | train 0.1354/0.943 | val 0.0835/0.957
+Epoch 002 | train 0.0902/0.953 | val 0.0816/0.955
+Epoch 003 | train 0.0843/0.954 | val 0.0854/0.945
+Epoch 004 | train 0.0786/0.957 | val 0.0848/0.946
+Epoch 005 | train 0.0782/0.957 | val 0.0971/0.939
+Epoch 006 | train 0.0772/0.956 | val 0.0754/0.959
+Epoch 007 | train 0.0736/0.959 | val 0.0813/0.957
+Epoch 008 | train 0.0754/0.957 | val 0.0747/0.961
+Epoch 009 | train 0.0747/0.959 | val 0.0735/0.959
+Epoch 010 | train 0.0736/0.960 | val 0.0763/0.959
+Epoch 011 | train 0.0713/0.959 | val 0.0765/0.959
+Epoch 012 | train 0.0708/0.958 | val 0.0749/0.960
+Epoch 013 | train 0.0717/0.961 | val 0.0778/0.951
+Epoch 014 | train 0.0709/0.962 | val 0.0760/0.959
+Epoch 015 | train 0.0696/0.961 | val 0.0862/0.959
+Epoch 016 | train 0.0700/0.960 | val 0.0789/0.952
+Epoch 017 | train 0.0681/0.961 | val 0.0797/0.957
+Epoch 018 | train 0.0694/0.959 | val 0.0815/0.959
+Epoch 019 | train 0.0695/0.962 | val 0.0751/0.957
+Epoch 020 | train 0.0704/0.961 | val 0.0778/0.954
+Epoch 021 | train 0.0700/0.962 | val 0.0816/0.948
+Epoch 022 | train 0.0672/0.961 | val 0.0752/0.959
+Epoch 023 | train 0.0692/0.962 | val 0.0775/0.948
+Epoch 024 | train 0.0681/0.960 | val 0.0738/0.959
+Epoch 025 | train 0.0700/0.963 | val 0.0747/0.960
+Epoch 026 | train 0.0680/0.963 | val 0.0851/0.952
+Epoch 027 | train 0.0677/0.962 | val 0.0813/0.947
+Epoch 028 | train 0.0663/0.961 | val 0.0874/0.949
+Epoch 029 | train 0.0710/0.962 | val 0.0739/0.959
+Epoch 030 | train 0.0683/0.962 | val 0.0739/0.957
+Epoch 031 | train 0.0670/0.962 | val 0.0724/0.959
+Epoch 032 | train 0.0691/0.962 | val 0.0749/0.952
+Epoch 033 | train 0.0656/0.964 | val 0.0830/0.949
+Epoch 034 | train 0.0671/0.962 | val 0.0769/0.959
+Epoch 035 | train 0.0694/0.964 | val 0.0771/0.958
+Epoch 036 | train 0.0666/0.964 | val 0.0783/0.959
+Epoch 037 | train 0.0690/0.965 | val 0.0758/0.958
+Epoch 038 | train 0.0670/0.963 | val 0.0779/0.958
+Epoch 039 | train 0.0671/0.964 | val 0.0747/0.957
+Epoch 040 | train 0.0662/0.963 | val 0.0798/0.959
+Epoch 041 | train 0.0665/0.964 | val 0.0737/0.960
+Epoch 042 | train 0.0659/0.965 | val 0.0732/0.959
+Epoch 043 | train 0.0666/0.963 | val 0.0822/0.956
+Epoch 044 | train 0.0651/0.962 | val 0.0823/0.956
+Epoch 045 | train 0.0672/0.964 | val 0.0791/0.952
+Epoch 046 | train 0.0658/0.964 | val 0.0765/0.958
+Epoch 047 | train 0.0659/0.966 | val 0.0788/0.955
+Epoch 048 | train 0.0698/0.965 | val 0.0734/0.960
+Epoch 049 | train 0.0651/0.964 | val 0.0765/0.960
+Epoch 050 | train 0.0659/0.965 | val 0.0779/0.960
+Test 0.6082/0.648
+Confusion Matrix (rows=true, cols=pred):
+tensor([[ 362,  489],
+        [ 308, 1102]])
+Per-class PRF: Normal Precision=0.540 Recall=0.425 F1=0.476 | Abnormal Precision=0.693 Recall=0.782 F1=0.734
+Weighted Overall: Precision=0.635 Recall=0.648 F1=0.637
+Saved results row to /dev/shm/icsme_sneh_gpu_rerun/experiment_local/baseline_runs_4jleboy9/run_004_SN_hierarchical_vae_real10.csv
+
+[5/8] /dev/shm/icsme_sneh_gpu_rerun/.venv/bin/python ./classifier/train_tt_anomaly.py --generator-name hierarchical_vae --syn-normal-path ./datasets/anomaly/TT/TT_normal_synthetic.pt --syn-abnormal-path ./datasets/anomaly/TT/TT_abnormal_synthetic.pt --weights-path classifier/baseline_weights_directed_full_hierarchical/tt_hierarchical_vae_real30_classifier_weights.pt --results-csv /dev/shm/icsme_sneh_gpu_rerun/experiment_local/baseline_runs_4jleboy9/run_005_TT_hierarchical_vae_real30.csv --real 30.0
+Dataset summary: {'train_normal_synth': 3038, 'train_abnormal_synth': 2157, 'train_normal_real': 1302, 'train_abnormal_real': 924, 'val_normal_synth': 760, 'val_abnormal_synth': 540, 'val_normal_real': 304, 'val_abnormal_real': 216, 'test_normal_real': 760, 'test_abnormal_real': 540, 'train_real_total': 2226, 'train_synth_total': 5195, 'val_source': 'mixed', 'min_nodes_filter': 3, 'train_total_after_filter': 7421, 'val_total_after_filter': 1820, 'test_total_after_filter': 1300, 'train_normal_real_after_filter': 4340, 'train_abnormal_real_after_filter': 3081, 'val_normal_real_after_filter': 1064, 'val_abnormal_real_after_filter': 756, 'test_normal_real_after_filter': 760, 'test_abnormal_real_after_filter': 540}
+Training mix: real=30.0% synth=70.0%
+Epoch 001 | train 0.6889/0.544 | val 0.6660/0.629
+Epoch 002 | train 0.6586/0.611 | val 0.6471/0.588
+Epoch 003 | train 0.6322/0.660 | val 0.6175/0.669
+Epoch 004 | train 0.6192/0.680 | val 0.6015/0.706
+Epoch 005 | train 0.6126/0.690 | val 0.5934/0.716
+Epoch 006 | train 0.6111/0.693 | val 0.6215/0.677
+Epoch 007 | train 0.6053/0.700 | val 0.6417/0.612
+Epoch 008 | train 0.6023/0.703 | val 0.5754/0.727
+Epoch 009 | train 0.6022/0.701 | val 0.5713/0.730
+Epoch 010 | train 0.6000/0.707 | val 0.5898/0.709
+Epoch 011 | train 0.6017/0.703 | val 0.5723/0.725
+Epoch 012 | train 0.5932/0.707 | val 0.5861/0.702
+Epoch 013 | train 0.5948/0.707 | val 0.5649/0.727
+Epoch 014 | train 0.5913/0.706 | val 0.5853/0.715
+Epoch 015 | train 0.5845/0.707 | val 0.5534/0.727
+Epoch 016 | train 0.5842/0.714 | val 0.5609/0.728
+Epoch 017 | train 0.5803/0.707 | val 0.5802/0.704
+Epoch 018 | train 0.5809/0.712 | val 0.5524/0.726
+Epoch 019 | train 0.5791/0.716 | val 0.5554/0.731
+Epoch 020 | train 0.5739/0.717 | val 0.5606/0.724
+Epoch 021 | train 0.5734/0.714 | val 0.5536/0.733
+Epoch 022 | train 0.5713/0.717 | val 0.5588/0.720
+Epoch 023 | train 0.5692/0.721 | val 0.5598/0.709
+Epoch 024 | train 0.5674/0.719 | val 0.5420/0.743
+Epoch 025 | train 0.5670/0.722 | val 0.5418/0.737
+Epoch 026 | train 0.5635/0.722 | val 0.5376/0.733
+Epoch 027 | train 0.5629/0.720 | val 0.5342/0.737
+Epoch 028 | train 0.5617/0.720 | val 0.5390/0.747
+Epoch 029 | train 0.5573/0.724 | val 0.5289/0.742
+Epoch 030 | train 0.5570/0.727 | val 0.5338/0.743
+Epoch 031 | train 0.5518/0.731 | val 0.5510/0.714
+Epoch 032 | train 0.5531/0.726 | val 0.5442/0.726
+Epoch 033 | train 0.5517/0.725 | val 0.5157/0.747
+Epoch 034 | train 0.5508/0.726 | val 0.5638/0.699
+Epoch 035 | train 0.5492/0.726 | val 0.5164/0.747
+Epoch 036 | train 0.5487/0.731 | val 0.5238/0.752
+Epoch 037 | train 0.5476/0.732 | val 0.5190/0.745
+Epoch 038 | train 0.5447/0.737 | val 0.5212/0.740
+Epoch 039 | train 0.5389/0.733 | val 0.5328/0.739
+Epoch 040 | train 0.5386/0.729 | val 0.5059/0.758
+Epoch 041 | train 0.5400/0.734 | val 0.5098/0.754
+Epoch 042 | train 0.5400/0.732 | val 0.5085/0.761
+Epoch 043 | train 0.5391/0.736 | val 0.5046/0.763
+Epoch 044 | train 0.5404/0.736 | val 0.5013/0.763
+Epoch 045 | train 0.5303/0.741 | val 0.5235/0.720
+Epoch 046 | train 0.5331/0.747 | val 0.5032/0.756
+Epoch 047 | train 0.5322/0.738 | val 0.5025/0.759
+Epoch 048 | train 0.5323/0.738 | val 0.5241/0.740
+Epoch 049 | train 0.5315/0.744 | val 0.4940/0.765
+Epoch 050 | train 0.5311/0.738 | val 0.5037/0.755
+Test 0.6744/0.633
+Confusion Matrix (rows=true, cols=pred):
+tensor([[504, 256],
+        [221, 319]])
+Per-class PRF: Normal Precision=0.695 Recall=0.663 F1=0.679 | Abnormal Precision=0.555 Recall=0.591 F1=0.572
+Weighted Overall: Precision=0.637 Recall=0.633 F1=0.635
+Saved results row to /dev/shm/icsme_sneh_gpu_rerun/experiment_local/baseline_runs_4jleboy9/run_005_TT_hierarchical_vae_real30.csv
+
+[6/8] /dev/shm/icsme_sneh_gpu_rerun/.venv/bin/python ./classifier/train_sn_anomaly.py --generator-name hierarchical_vae --syn-normal-path ./datasets/anomaly/SN/SN_normal_synthetic.pt --syn-abnormal-path ./datasets/anomaly/SN/SN_abnormal_synthetic.pt --weights-path classifier/baseline_weights_directed_full_hierarchical/sn_hierarchical_vae_real30_classifier_weights.pt --results-csv /dev/shm/icsme_sneh_gpu_rerun/experiment_local/baseline_runs_4jleboy9/run_006_SN_hierarchical_vae_real30.csv --real 30.0
+Dataset summary: {'train_normal_synth': 3404, 'train_abnormal_synth': 5639, 'train_normal_real': 1458, 'train_abnormal_real': 2417, 'val_normal_synth': 851, 'val_abnormal_synth': 1410, 'val_normal_real': 341, 'val_abnormal_real': 564, 'test_normal_real': 851, 'test_abnormal_real': 1410, 'train_real_total': 3875, 'train_synth_total': 9043, 'val_source': 'mixed'}
+Training mix: real=30.0% synth=70.0%
+Epoch 001 | train 0.2573/0.862 | val 0.2080/0.856
+Epoch 002 | train 0.2130/0.870 | val 0.2007/0.865
+Epoch 003 | train 0.2049/0.875 | val 0.1932/0.876
+Epoch 004 | train 0.2025/0.875 | val 0.1961/0.860
+Epoch 005 | train 0.2007/0.876 | val 0.1882/0.892
+Epoch 006 | train 0.1978/0.879 | val 0.1850/0.895
+Epoch 007 | train 0.1964/0.883 | val 0.1844/0.893
+Epoch 008 | train 0.1947/0.885 | val 0.1936/0.892
+Epoch 009 | train 0.1972/0.886 | val 0.1853/0.891
+Epoch 010 | train 0.1935/0.887 | val 0.2061/0.849
+Epoch 011 | train 0.1930/0.885 | val 0.1916/0.858
+Epoch 012 | train 0.1938/0.882 | val 0.1894/0.894
+Epoch 013 | train 0.1923/0.885 | val 0.2020/0.887
+Epoch 014 | train 0.1923/0.889 | val 0.1813/0.897
+Epoch 015 | train 0.1905/0.890 | val 0.1873/0.890
+Epoch 016 | train 0.1912/0.883 | val 0.1965/0.893
+Epoch 017 | train 0.1902/0.887 | val 0.1796/0.901
+Epoch 018 | train 0.1897/0.890 | val 0.1885/0.878
+Epoch 019 | train 0.1896/0.888 | val 0.1797/0.900
+Epoch 020 | train 0.1909/0.890 | val 0.1841/0.899
+Epoch 021 | train 0.1894/0.892 | val 0.1798/0.899
+Epoch 022 | train 0.1875/0.891 | val 0.1851/0.893
+Epoch 023 | train 0.1895/0.890 | val 0.1789/0.901
+Epoch 024 | train 0.1892/0.890 | val 0.1800/0.900
+Epoch 025 | train 0.1884/0.892 | val 0.1859/0.896
+Epoch 026 | train 0.1867/0.896 | val 0.1866/0.899
+Epoch 027 | train 0.1888/0.891 | val 0.1788/0.899
+Epoch 028 | train 0.1881/0.894 | val 0.1812/0.900
+Epoch 029 | train 0.1883/0.894 | val 0.1824/0.897
+Epoch 030 | train 0.1868/0.893 | val 0.1800/0.901
+Epoch 031 | train 0.1867/0.899 | val 0.1869/0.890
+Epoch 032 | train 0.1890/0.893 | val 0.1800/0.902
+Epoch 033 | train 0.1876/0.893 | val 0.1777/0.901
+Epoch 034 | train 0.1867/0.893 | val 0.1817/0.899
+Epoch 035 | train 0.1868/0.895 | val 0.1769/0.902
+Epoch 036 | train 0.1859/0.896 | val 0.1931/0.880
+Epoch 037 | train 0.1870/0.896 | val 0.1847/0.899
+Epoch 038 | train 0.1857/0.897 | val 0.1789/0.903
+Epoch 039 | train 0.1868/0.898 | val 0.1897/0.868
+Epoch 040 | train 0.1882/0.892 | val 0.1784/0.901
+Epoch 041 | train 0.1872/0.896 | val 0.1935/0.872
+Epoch 042 | train 0.1854/0.897 | val 0.1822/0.901
+Epoch 043 | train 0.1872/0.894 | val 0.1806/0.894
+Epoch 044 | train 0.1852/0.895 | val 0.1868/0.901
+Epoch 045 | train 0.1852/0.895 | val 0.1797/0.901
+Epoch 046 | train 0.1869/0.895 | val 0.1812/0.899
+Epoch 047 | train 0.1847/0.896 | val 0.1854/0.894
+Epoch 048 | train 0.1849/0.896 | val 0.1809/0.897
+Epoch 049 | train 0.1855/0.897 | val 0.1846/0.884
+Epoch 050 | train 0.1843/0.896 | val 0.1809/0.901
+Test 0.6029/0.665
+Confusion Matrix (rows=true, cols=pred):
+tensor([[ 378,  473],
+        [ 284, 1126]])
+Per-class PRF: Normal Precision=0.571 Recall=0.444 F1=0.500 | Abnormal Precision=0.704 Recall=0.799 F1=0.748
+Weighted Overall: Precision=0.654 Recall=0.665 F1=0.655
+Saved results row to /dev/shm/icsme_sneh_gpu_rerun/experiment_local/baseline_runs_4jleboy9/run_006_SN_hierarchical_vae_real30.csv
+
+[7/8] /dev/shm/icsme_sneh_gpu_rerun/.venv/bin/python ./classifier/train_tt_anomaly.py --generator-name hierarchical_vae --syn-normal-path ./datasets/anomaly/TT/TT_normal_synthetic.pt --syn-abnormal-path ./datasets/anomaly/TT/TT_abnormal_synthetic.pt --weights-path classifier/baseline_weights_directed_full_hierarchical/tt_hierarchical_vae_real100_classifier_weights.pt --results-csv /dev/shm/icsme_sneh_gpu_rerun/experiment_local/baseline_runs_4jleboy9/run_007_TT_hierarchical_vae_real100.csv --real 100.0
+Dataset summary: {'train_normal_synth': 0, 'train_abnormal_synth': 0, 'train_normal_real': 2734, 'train_abnormal_real': 1941, 'val_normal_synth': 0, 'val_abnormal_synth': 0, 'val_normal_real': 304, 'val_abnormal_real': 216, 'test_normal_real': 760, 'test_abnormal_real': 540, 'train_real_total': 4675, 'train_synth_total': 0, 'val_source': 'real', 'min_nodes_filter': 3, 'train_total_after_filter': 4675, 'val_total_after_filter': 520, 'test_total_after_filter': 1300, 'train_normal_real_after_filter': 2734, 'train_abnormal_real_after_filter': 1941, 'val_normal_real_after_filter': 304, 'val_abnormal_real_after_filter': 216, 'test_normal_real_after_filter': 760, 'test_abnormal_real_after_filter': 540}
+Training mix: real=100.0% synth=0.0%
+Epoch 001 | train 0.6954/0.530 | val 0.6838/0.590
+Epoch 002 | train 0.6873/0.565 | val 0.6755/0.579
+Epoch 003 | train 0.6674/0.608 | val 0.6466/0.640
+Epoch 004 | train 0.6485/0.631 | val 0.6441/0.623
+Epoch 005 | train 0.6365/0.663 | val 0.6359/0.671
+Epoch 006 | train 0.6292/0.674 | val 0.6271/0.671
+Epoch 007 | train 0.6263/0.687 | val 0.6413/0.679
+Epoch 008 | train 0.6243/0.690 | val 0.6428/0.663
+Epoch 009 | train 0.6258/0.687 | val 0.6382/0.671
+Epoch 010 | train 0.6216/0.688 | val 0.6254/0.677
+Epoch 011 | train 0.6214/0.700 | val 0.6493/0.679
+Epoch 012 | train 0.6205/0.694 | val 0.6365/0.681
+Epoch 013 | train 0.6204/0.693 | val 0.6365/0.669
+Epoch 014 | train 0.6206/0.693 | val 0.6654/0.650
+Epoch 015 | train 0.6205/0.698 | val 0.6359/0.681
+Epoch 016 | train 0.6192/0.697 | val 0.6295/0.677
+Epoch 017 | train 0.6207/0.696 | val 0.6371/0.662
+Epoch 018 | train 0.6194/0.698 | val 0.6393/0.683
+Epoch 019 | train 0.6198/0.699 | val 0.6289/0.679
+Epoch 020 | train 0.6200/0.696 | val 0.6320/0.681
+Epoch 021 | train 0.6192/0.699 | val 0.6279/0.675
+Epoch 022 | train 0.6190/0.701 | val 0.6271/0.681
+Epoch 023 | train 0.6189/0.694 | val 0.6315/0.679
+Epoch 024 | train 0.6196/0.697 | val 0.6265/0.685
+Epoch 025 | train 0.6197/0.698 | val 0.6294/0.679
+Epoch 026 | train 0.6183/0.701 | val 0.6456/0.663
+Epoch 027 | train 0.6185/0.699 | val 0.6286/0.671
+Epoch 028 | train 0.6205/0.695 | val 0.6351/0.681
+Epoch 029 | train 0.6173/0.698 | val 0.6275/0.679
+Epoch 030 | train 0.6180/0.700 | val 0.6310/0.685
+Epoch 031 | train 0.6202/0.699 | val 0.6287/0.681
+Epoch 032 | train 0.6179/0.702 | val 0.6292/0.681
+Epoch 033 | train 0.6192/0.703 | val 0.6449/0.652
+Epoch 034 | train 0.6189/0.694 | val 0.6332/0.675
+Epoch 035 | train 0.6204/0.699 | val 0.6268/0.685
+Epoch 036 | train 0.6171/0.702 | val 0.6338/0.681
+Epoch 037 | train 0.6181/0.701 | val 0.6323/0.683
+Epoch 038 | train 0.6177/0.699 | val 0.6314/0.683
+Epoch 039 | train 0.6170/0.704 | val 0.6311/0.687
+Epoch 040 | train 0.6180/0.703 | val 0.6308/0.685
+Epoch 041 | train 0.6174/0.699 | val 0.6299/0.679
+Epoch 042 | train 0.6200/0.699 | val 0.6379/0.669
+Epoch 043 | train 0.6182/0.700 | val 0.6266/0.683
+Epoch 044 | train 0.6185/0.698 | val 0.6260/0.675
+Epoch 045 | train 0.6160/0.700 | val 0.6327/0.677
+Epoch 046 | train 0.6181/0.701 | val 0.6399/0.650
+Epoch 047 | train 0.6166/0.695 | val 0.6397/0.667
+Epoch 048 | train 0.6163/0.700 | val 0.6365/0.687
+Epoch 049 | train 0.6171/0.701 | val 0.6329/0.675
+Epoch 050 | train 0.6152/0.700 | val 0.6395/0.683
+Test 0.6369/0.685
+Confusion Matrix (rows=true, cols=pred):
+tensor([[672,  88],
+        [321, 219]])
+Per-class PRF: Normal Precision=0.677 Recall=0.884 F1=0.767 | Abnormal Precision=0.713 Recall=0.406 F1=0.517
+Weighted Overall: Precision=0.692 Recall=0.685 F1=0.663
+Saved results row to /dev/shm/icsme_sneh_gpu_rerun/experiment_local/baseline_runs_4jleboy9/run_007_TT_hierarchical_vae_real100.csv
+
+[8/8] /dev/shm/icsme_sneh_gpu_rerun/.venv/bin/python ./classifier/train_sn_anomaly.py --generator-name hierarchical_vae --syn-normal-path ./datasets/anomaly/SN/SN_normal_synthetic.pt --syn-abnormal-path ./datasets/anomaly/SN/SN_abnormal_synthetic.pt --weights-path classifier/baseline_weights_directed_full_hierarchical/sn_hierarchical_vae_real100_classifier_weights.pt --results-csv /dev/shm/icsme_sneh_gpu_rerun/experiment_local/baseline_runs_4jleboy9/run_008_SN_hierarchical_vae_real100.csv --real 100.0
+Dataset summary: {'train_normal_synth': 0, 'train_abnormal_synth': 0, 'train_normal_real': 3063, 'train_abnormal_real': 5075, 'val_normal_synth': 0, 'val_abnormal_synth': 0, 'val_normal_real': 341, 'val_abnormal_real': 564, 'test_normal_real': 851, 'test_abnormal_real': 1410, 'train_real_total': 8138, 'train_synth_total': 0, 'val_source': 'real'}
+Training mix: real=100.0% synth=0.0%
+Epoch 001 | train 0.6854/0.572 | val 0.6440/0.618
+Epoch 002 | train 0.6423/0.604 | val 0.6471/0.539
+Epoch 003 | train 0.6251/0.613 | val 0.6442/0.560
+Epoch 004 | train 0.6198/0.616 | val 0.6091/0.642
+Epoch 005 | train 0.6165/0.611 | val 0.5953/0.673
+Epoch 006 | train 0.6142/0.623 | val 0.6027/0.621
+Epoch 007 | train 0.6118/0.624 | val 0.6058/0.602
+Epoch 008 | train 0.6089/0.630 | val 0.5952/0.648
+Epoch 009 | train 0.6078/0.628 | val 0.5804/0.670
+Epoch 010 | train 0.6061/0.642 | val 0.6263/0.576
+Epoch 011 | train 0.6057/0.642 | val 0.5902/0.634
+Epoch 012 | train 0.6047/0.646 | val 0.5965/0.663
+Epoch 013 | train 0.6018/0.647 | val 0.5941/0.642
+Epoch 014 | train 0.6032/0.650 | val 0.6253/0.596
+Epoch 015 | train 0.6024/0.642 | val 0.6109/0.631
+Epoch 016 | train 0.6019/0.641 | val 0.5963/0.633
+Epoch 017 | train 0.6011/0.640 | val 0.6106/0.608
+Epoch 018 | train 0.6002/0.646 | val 0.5854/0.638
+Epoch 019 | train 0.5988/0.649 | val 0.6076/0.619
+Epoch 020 | train 0.5981/0.650 | val 0.6497/0.581
+Epoch 021 | train 0.5973/0.646 | val 0.5996/0.627
+Epoch 022 | train 0.5977/0.645 | val 0.6010/0.614
+Epoch 023 | train 0.5964/0.649 | val 0.5868/0.629
+Epoch 024 | train 0.5953/0.648 | val 0.6130/0.611
+Epoch 025 | train 0.5943/0.646 | val 0.5993/0.627
+Epoch 026 | train 0.5943/0.647 | val 0.5984/0.620
+Epoch 027 | train 0.5962/0.649 | val 0.5735/0.657
+Epoch 028 | train 0.5922/0.649 | val 0.5951/0.623
+Epoch 029 | train 0.5910/0.656 | val 0.5944/0.623
+Epoch 030 | train 0.5930/0.650 | val 0.5890/0.633
+Epoch 031 | train 0.5927/0.646 | val 0.5943/0.639
+Epoch 032 | train 0.5883/0.650 | val 0.5792/0.651
+Epoch 033 | train 0.5893/0.652 | val 0.5866/0.633
+Epoch 034 | train 0.5896/0.652 | val 0.5939/0.622
+Epoch 035 | train 0.5874/0.648 | val 0.5799/0.642
+Epoch 036 | train 0.5873/0.659 | val 0.6246/0.615
+Epoch 037 | train 0.5861/0.655 | val 0.6013/0.620
+Epoch 038 | train 0.5874/0.658 | val 0.5940/0.636
+Epoch 039 | train 0.5878/0.650 | val 0.5855/0.624
+Epoch 040 | train 0.5884/0.659 | val 0.6078/0.618
+Epoch 041 | train 0.5881/0.655 | val 0.5958/0.620
+Epoch 042 | train 0.5877/0.652 | val 0.5896/0.628
+Epoch 043 | train 0.5880/0.651 | val 0.6000/0.610
+Epoch 044 | train 0.5845/0.653 | val 0.5807/0.633
+Epoch 045 | train 0.5841/0.655 | val 0.6440/0.612
+Epoch 046 | train 0.5852/0.656 | val 0.5951/0.636
+Epoch 047 | train 0.5850/0.654 | val 0.5929/0.625
+Epoch 048 | train 0.5869/0.655 | val 0.6031/0.628
+Epoch 049 | train 0.5851/0.657 | val 0.5983/0.623
+Epoch 050 | train 0.5838/0.659 | val 0.5987/0.624
+Test 0.5698/0.671
+Confusion Matrix (rows=true, cols=pred):
+tensor([[ 439,  412],
+        [ 332, 1078]])
+Per-class PRF: Normal Precision=0.569 Recall=0.516 F1=0.541 | Abnormal Precision=0.723 Recall=0.765 F1=0.743
+Weighted Overall: Precision=0.665 Recall=0.671 F1=0.667
+Saved results row to /dev/shm/icsme_sneh_gpu_rerun/experiment_local/baseline_runs_4jleboy9/run_008_SN_hierarchical_vae_real100.csv
+
+Done. Results written to /dev/shm/icsme_sneh_gpu_rerun/experiment_local/classifier/baseline_directed_full_hierarchical.csv
+Final tables written to /dev/shm/icsme_sneh_gpu_rerun/experiment_local/classifier/baseline_directed_full_hierarchical.md
+END 2026-05-17T00:42:11-04:00

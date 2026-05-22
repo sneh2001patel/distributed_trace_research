@@ -1,0 +1,9 @@
+system,trace_class,threshold,total_graphs,kept_graphs,filtered_graphs,kept_percent
+TT,normal,30,6212,6212,0,100.0
+TT,normal,50,6212,6212,0,100.0
+TT,abnormal,30,4729,4729,0,100.0
+TT,abnormal,50,4729,4729,0,100.0
+SN,normal,30,4255,4255,0,100.0
+SN,normal,50,4255,4255,0,100.0
+SN,abnormal,30,7049,7049,0,100.0
+SN,abnormal,50,7049,7049,0,100.0

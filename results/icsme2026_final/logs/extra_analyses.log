@@ -1,0 +1,16 @@
+START 2026-05-17T03:50:12-04:00
+{'system': 'TT', 'trace_class': 'normal', 'threshold': 30, 'total_graphs': 6212, 'kept_graphs': 6212, 'filtered_graphs': 0, 'kept_percent': 100.0}
+{'system': 'TT', 'trace_class': 'normal', 'threshold': 50, 'total_graphs': 6212, 'kept_graphs': 6212, 'filtered_graphs': 0, 'kept_percent': 100.0}
+{'system': 'TT', 'trace_class': 'abnormal', 'threshold': 30, 'total_graphs': 4729, 'kept_graphs': 4729, 'filtered_graphs': 0, 'kept_percent': 100.0}
+{'system': 'TT', 'trace_class': 'abnormal', 'threshold': 50, 'total_graphs': 4729, 'kept_graphs': 4729, 'filtered_graphs': 0, 'kept_percent': 100.0}
+{'system': 'SN', 'trace_class': 'normal', 'threshold': 30, 'total_graphs': 4255, 'kept_graphs': 4255, 'filtered_graphs': 0, 'kept_percent': 100.0}
+{'system': 'SN', 'trace_class': 'normal', 'threshold': 50, 'total_graphs': 4255, 'kept_graphs': 4255, 'filtered_graphs': 0, 'kept_percent': 100.0}
+{'system': 'SN', 'trace_class': 'abnormal', 'threshold': 30, 'total_graphs': 7049, 'kept_graphs': 7049, 'filtered_graphs': 0, 'kept_percent': 100.0}
+{'system': 'SN', 'trace_class': 'abnormal', 'threshold': 50, 'total_graphs': 7049, 'kept_graphs': 7049, 'filtered_graphs': 0, 'kept_percent': 100.0}
+Wrote /dev/shm/icsme_sneh_gpu_rerun/experiment_local/classifier/filtering_sensitivity.csv
+{'system': 'TT', 'trace_class': 'normal', 'real_graphs': 6212, 'synthetic_graphs': 6212, 'unique_synthetic_ratio': 0.011751448808757245, 'exact_duplicate_rate': 0.5977141017385705, 'novelty_rate': 0.40228589826142946, 'near_duplicate_rate': 0.9876046361880232, 'mean_nearest_edge_jaccard': 0.9972638083995133, 'service_operation_coverage': 1.0, 'edge_pattern_coverage': 1.0}
+{'system': 'TT', 'trace_class': 'abnormal', 'real_graphs': 4729, 'synthetic_graphs': 4729, 'unique_synthetic_ratio': 0.012053288221611334, 'exact_duplicate_rate': 0.5631211672658067, 'novelty_rate': 0.43687883273419326, 'near_duplicate_rate': 0.9936561640938888, 'mean_nearest_edge_jaccard': 0.9973755315899534, 'service_operation_coverage': 0.7857142857142857, 'edge_pattern_coverage': 1.0}
+{'system': 'SN', 'trace_class': 'normal', 'real_graphs': 4255, 'synthetic_graphs': 4255, 'unique_synthetic_ratio': 0.962867215041128, 'exact_duplicate_rate': 0.0, 'novelty_rate': 1.0, 'near_duplicate_rate': 0.0, 'mean_nearest_edge_jaccard': 0.000810692216582148, 'service_operation_coverage': 0.8305084745762712, 'edge_pattern_coverage': 0.13636363636363635}
+{'system': 'SN', 'trace_class': 'abnormal', 'real_graphs': 7049, 'synthetic_graphs': 7049, 'unique_synthetic_ratio': 0.8154348134487162, 'exact_duplicate_rate': 0.0, 'novelty_rate': 1.0, 'near_duplicate_rate': 0.004823379202723791, 'mean_nearest_edge_jaccard': 0.08404896558299436, 'service_operation_coverage': 0.9491525423728814, 'edge_pattern_coverage': 0.5454545454545454}
+Wrote /dev/shm/icsme_sneh_gpu_rerun/experiment_local/classifier/memorization_directed_full.csv
+END 2026-05-17T03:51:27-04:00

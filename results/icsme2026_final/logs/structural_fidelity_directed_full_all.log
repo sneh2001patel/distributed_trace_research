@@ -1,0 +1,23 @@
+START 2026-05-17T02:12:43-04:00
+TT random_sampling normal: overall=0.571 structure=0.567 timing=0.816 semantic=0.329
+TT random_sampling abnormal: overall=0.579 structure=0.567 timing=0.839 semantic=0.330
+TT random_sampling combined: overall=0.575 structure=0.568 timing=0.829 semantic=0.330
+TT flat_vae normal: overall=0.512 structure=0.537 timing=0.405 semantic=0.593
+TT flat_vae abnormal: overall=0.571 structure=0.655 timing=0.390 semantic=0.667
+TT flat_vae combined: overall=0.545 structure=0.601 timing=0.400 semantic=0.632
+TT hierarchical_vae normal: overall=0.971 structure=0.984 timing=0.943 semantic=0.987
+TT hierarchical_vae abnormal: overall=0.965 structure=0.974 timing=0.942 semantic=0.979
+TT hierarchical_vae combined: overall=0.974 structure=0.982 timing=0.952 semantic=0.986
+SN random_sampling normal: overall=0.673 structure=0.798 timing=0.831 semantic=0.390
+SN random_sampling abnormal: overall=0.678 structure=0.784 timing=0.870 semantic=0.381
+SN random_sampling combined: overall=0.678 structure=0.795 timing=0.853 semantic=0.387
+SN flat_vae normal: overall=0.556 structure=0.500 timing=0.461 semantic=0.706
+SN flat_vae abnormal: overall=0.643 structure=0.761 timing=0.370 semantic=0.800
+SN flat_vae combined: overall=0.610 structure=0.639 timing=0.429 semantic=0.761
+SN hierarchical_vae normal: overall=0.487 structure=0.626 timing=0.397 semantic=0.438
+SN hierarchical_vae abnormal: overall=0.517 structure=0.615 timing=0.392 semantic=0.544
+SN hierarchical_vae combined: overall=0.517 structure=0.624 timing=0.402 semantic=0.526
+
+Wrote /dev/shm/icsme_sneh_gpu_rerun/experiment_local/classifier/structural_fidelity_directed_full_all.csv
+Wrote /dev/shm/icsme_sneh_gpu_rerun/experiment_local/classifier/structural_fidelity_directed_full_all.md
+END 2026-05-17T02:13:18-04:00

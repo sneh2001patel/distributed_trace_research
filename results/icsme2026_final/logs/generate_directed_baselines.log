@@ -1,0 +1,39 @@
+START 2026-05-17T00:43:23-04:00
+
+=== BUILDING SN NORMAL RANDOM SAMPLING DATASET ===
+saved ./datasets/baselines/SN_normal_random_sampling.pt (4255 graphs)
+
+=== BUILDING SN ABNORMAL RANDOM SAMPLING DATASET ===
+saved ./datasets/baselines/SN_abnormal_random_sampling.pt (7049 graphs)
+
+=== BUILDING TT NORMAL RANDOM SAMPLING DATASET ===
+saved ./datasets/baselines/TT_normal_random_sampling.pt (6212 graphs)
+
+=== BUILDING TT ABNORMAL RANDOM SAMPLING DATASET ===
+saved ./datasets/baselines/TT_abnormal_random_sampling.pt (4729 graphs)
+
+Summary written to datasets/baselines/random_sampling_summary.json
+
+=== BUILDING SN NORMAL FLAT VAE DATASET ===
+saved ./datasets/baselines/SN_normal_flat_vae_synthetic.pt (4255 graphs)
+
+=== BUILDING SN ABNORMAL FLAT VAE DATASET ===
+saved ./datasets/baselines/SN_abnormal_flat_vae_synthetic.pt (7049 graphs)
+
+=== BUILDING TT NORMAL FLAT VAE DATASET ===
+saved ./datasets/baselines/TT_normal_flat_vae_synthetic.pt (6212 graphs)
+
+=== BUILDING TT ABNORMAL FLAT VAE DATASET ===
+saved ./datasets/baselines/TT_abnormal_flat_vae_synthetic.pt (4729 graphs)
+BASELINE FILES
+total 9.1M
+-rw-r--r-- 1 nezzatijivan faculty  2.8K May 17 00:45 random_sampling_summary.json
+-rw-r--r-- 1 nezzatijivan faculty  1.9M May 17 00:45 SN_abnormal_flat_vae_synthetic.pt
+-rw-r--r-- 1 nezzatijivan faculty  1.9M May 17 00:44 SN_abnormal_random_sampling.pt
+-rw-r--r-- 1 nezzatijivan faculty  951K May 17 00:45 SN_normal_flat_vae_synthetic.pt
+-rw-r--r-- 1 nezzatijivan faculty  1.3M May 17 00:43 SN_normal_random_sampling.pt
+-rw-r--r-- 1 nezzatijivan faculty  784K May 17 00:46 TT_abnormal_flat_vae_synthetic.pt
+-rw-r--r-- 1 nezzatijivan faculty  613K May 17 00:45 TT_abnormal_random_sampling.pt
+-rw-r--r-- 1 nezzatijivan faculty 1002K May 17 00:46 TT_normal_flat_vae_synthetic.pt
+-rw-r--r-- 1 nezzatijivan faculty  921K May 17 00:44 TT_normal_random_sampling.pt
+END 2026-05-17T00:46:35-04:00

@@ -1,0 +1,18 @@
+{
+  "normal": {
+    "real_path": "./datasets/anomaly/SN/SN_normal.pt",
+    "weights_path": "./weights/sn_normal_vae_weights.pt",
+    "out_path": "./datasets/anomaly/SN/SN_normal_synthetic.pt",
+    "graphs": 4255,
+    "node_count_min": 3,
+    "node_count_max": 30
+  },
+  "abnormal": {
+    "real_path": "./datasets/anomaly/SN/SN_abnormal.pt",
+    "weights_path": "./weights/sn_abnormal_vae_weights.pt",
+    "out_path": "./datasets/anomaly/SN/SN_abnormal_synthetic.pt",
+    "graphs": 7049,
+    "node_count_min": 3,
+    "node_count_max": 30
+  }
+}

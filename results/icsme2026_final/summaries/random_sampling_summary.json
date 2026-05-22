@@ -1,0 +1,114 @@
+{
+  "SN": {
+    "normal": {
+      "real_path": "./datasets/anomaly/SN/SN_normal.pt",
+      "out_path": "./datasets/baselines/SN_normal_random_sampling.pt",
+      "graphs": 4255,
+      "node_count_min": 3,
+      "node_count_max": 30,
+      "edge_count_min": 1,
+      "edge_count_max": 29,
+      "feature_min": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "feature_max": [
+        11.0,
+        58.0,
+        221306560.0
+      ],
+      "integer_feature_indices": [
+        0,
+        1
+      ],
+      "continuous_feature_sampling": "empirical",
+      "duration_feature_index": 2,
+      "duration_sampling": "empirical_log1p_quantile_clipped",
+      "duration_quantile_clip": 0.99
+    },
+    "abnormal": {
+      "real_path": "./datasets/anomaly/SN/SN_abnormal.pt",
+      "out_path": "./datasets/baselines/SN_abnormal_random_sampling.pt",
+      "graphs": 7049,
+      "node_count_min": 3,
+      "node_count_max": 30,
+      "edge_count_min": 1,
+      "edge_count_max": 29,
+      "feature_min": [
+        0.0,
+        0.0,
+        3.0
+      ],
+      "feature_max": [
+        11.0,
+        58.0,
+        214591712.0
+      ],
+      "integer_feature_indices": [
+        0,
+        1
+      ],
+      "continuous_feature_sampling": "empirical",
+      "duration_feature_index": 2,
+      "duration_sampling": "empirical_log1p_quantile_clipped",
+      "duration_quantile_clip": 0.99
+    }
+  },
+  "TT": {
+    "normal": {
+      "real_path": "./datasets/anomaly/TT/TT_normal.pt",
+      "out_path": "./datasets/baselines/TT_normal_random_sampling.pt",
+      "graphs": 6212,
+      "node_count_min": 1,
+      "node_count_max": 23,
+      "edge_count_min": 0,
+      "edge_count_max": 22,
+      "feature_min": [
+        0.0,
+        0.0,
+        924.0
+      ],
+      "feature_max": [
+        12.0,
+        16.0,
+        99972320.0
+      ],
+      "integer_feature_indices": [
+        0,
+        1
+      ],
+      "continuous_feature_sampling": "empirical",
+      "duration_feature_index": 2,
+      "duration_sampling": "empirical_log1p_quantile_clipped",
+      "duration_quantile_clip": 0.99
+    },
+    "abnormal": {
+      "real_path": "./datasets/anomaly/TT/TT_abnormal.pt",
+      "out_path": "./datasets/baselines/TT_abnormal_random_sampling.pt",
+      "graphs": 4729,
+      "node_count_min": 1,
+      "node_count_max": 23,
+      "edge_count_min": 0,
+      "edge_count_max": 22,
+      "feature_min": [
+        0.0,
+        0.0,
+        461.0
+      ],
+      "feature_max": [
+        12.0,
+        16.0,
+        648512960.0
+      ],
+      "integer_feature_indices": [
+        0,
+        1
+      ],
+      "continuous_feature_sampling": "empirical",
+      "duration_feature_index": 2,
+      "duration_sampling": "empirical_log1p_quantile_clipped",
+      "duration_quantile_clip": 0.99
+    }
+  }
+}

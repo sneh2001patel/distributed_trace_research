@@ -1,0 +1,65 @@
+START 2026-05-16T23:56:22-04:00
+
+=== BUILDING TT NORMAL SYNTHETIC DATASET ===
+Building latent pool from 6212 eligible real graphs (1 <= nodes <= 30) out of 6212 total.
+saved ./datasets/anomaly/TT/TT_normal_synthetic.pt (6212 graphs)
+
+=== BUILDING TT ABNORMAL SYNTHETIC DATASET ===
+Building latent pool from 4729 eligible real graphs (1 <= nodes <= 30) out of 4729 total.
+saved ./datasets/anomaly/TT/TT_abnormal_synthetic.pt (4729 graphs)
+
+Summary written to datasets/anomaly/TT/synthetic_summary.json
+
+=== BUILDING SN NORMAL SYNTHETIC DATASET ===
+Building latent pool from 4255 real graphs...
+saved ./datasets/anomaly/SN/SN_normal_synthetic.pt (4255 graphs)
+
+=== BUILDING SN ABNORMAL SYNTHETIC DATASET ===
+Building latent pool from 7049 real graphs...
+saved ./datasets/anomaly/SN/SN_abnormal_synthetic.pt (7049 graphs)
+
+Summary written to datasets/anomaly/SN/synthetic_summary.json
+SUMMARIES
+{
+  "normal": {
+    "real_path": "./datasets/anomaly/TT/TT_normal.pt",
+    "weights_path": "./weights/tt_normal_vae_weights.pt",
+    "out_path": "./datasets/anomaly/TT/TT_normal_synthetic.pt",
+    "graphs": 6212,
+    "real_graphs_total": 6212,
+    "real_graphs_used_for_sizes": 6212,
+    "min_nodes": 1,
+    "trained_node_cap": 30,
+    "node_count_min": 1,
+    "node_count_max": 23
+  },
+  "abnormal": {
+    "real_path": "./datasets/anomaly/TT/TT_abnormal.pt",
+    "weights_path": "./weights/tt_abnormal_vae_weights.pt",
+    "out_path": "./datasets/anomaly/TT/TT_abnormal_synthetic.pt",
+    "graphs": 4729,
+    "real_graphs_total": 4729,
+    "real_graphs_used_for_sizes": 4729,
+    "min_nodes": 1,
+    "trained_node_cap": 30,
+    "node_count_min": 1,
+    "node_count_max": 23
+  }
+}{
+  "normal": {
+    "real_path": "./datasets/anomaly/SN/SN_normal.pt",
+    "weights_path": "./weights/sn_normal_vae_weights.pt",
+    "out_path": "./datasets/anomaly/SN/SN_normal_synthetic.pt",
+    "graphs": 4255,
+    "node_count_min": 3,
+    "node_count_max": 30
+  },
+  "abnormal": {
+    "real_path": "./datasets/anomaly/SN/SN_abnormal.pt",
+    "weights_path": "./weights/sn_abnormal_vae_weights.pt",
+    "out_path": "./datasets/anomaly/SN/SN_abnormal_synthetic.pt",
+    "graphs": 7049,
+    "node_count_min": 3,
+    "node_count_max": 30
+  }
+}END 2026-05-16T23:59:00-04:00

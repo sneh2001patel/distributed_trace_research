@@ -1,0 +1,26 @@
+{
+  "normal": {
+    "real_path": "./datasets/anomaly/TT/TT_normal.pt",
+    "weights_path": "./weights/tt_normal_vae_weights.pt",
+    "out_path": "./datasets/anomaly/TT/TT_normal_synthetic.pt",
+    "graphs": 6212,
+    "real_graphs_total": 6212,
+    "real_graphs_used_for_sizes": 6212,
+    "min_nodes": 1,
+    "trained_node_cap": 30,
+    "node_count_min": 1,
+    "node_count_max": 23
+  },
+  "abnormal": {
+    "real_path": "./datasets/anomaly/TT/TT_abnormal.pt",
+    "weights_path": "./weights/tt_abnormal_vae_weights.pt",
+    "out_path": "./datasets/anomaly/TT/TT_abnormal_synthetic.pt",
+    "graphs": 4729,
+    "real_graphs_total": 4729,
+    "real_graphs_used_for_sizes": 4729,
+    "min_nodes": 1,
+    "trained_node_cap": 30,
+    "node_count_min": 1,
+    "node_count_max": 23
+  }
+}
